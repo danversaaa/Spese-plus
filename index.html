@@ -7,9 +7,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Spese+">
-  <link rel="manifest" href="./manifest.webmanifest?v=1.3.0">
-  <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=1.3.0">
-  <link rel="stylesheet" href="./styles.css?v=1.3.0">
+  <link rel="manifest" href="./manifest.webmanifest?v=1.3.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=1.3.1">
+  <link rel="stylesheet" href="./styles.css?v=1.3.1">
   <title>Spese+ • Bilancio personale</title>
 </head>
 <body>
@@ -25,9 +25,10 @@
       <label>Email<input id="email" type="email" required autocomplete="email"></label>
       <label>Password<input id="password" type="password" minlength="6" required autocomplete="current-password"></label>
       <button id="authSubmit" class="primary" type="submit">Accedi</button>
+      <button id="resetPasswordBtn" class="forgot-password" type="button">Password dimenticata?</button>
     </form>
     <div id="authMsg" class="msg"></div>
-    <div class="privacy-note">Accesso riservato all’utente autorizzato. Nessuna registrazione pubblica.</div><div class="build-badge">Spese+ 1.3.0</div>
+    <div class="privacy-note">Accesso riservato all’utente autorizzato. Nessuna registrazione pubblica.</div><div class="build-badge">Spese+ 1.3.1</div>
   </div>
 </div>
 
@@ -93,7 +94,7 @@
   });
 </script>
 <script type="module">
-  import("./app.js?v=1.3.0")
+  import("./app.js?v=1.3.1")
     .then(() => {
       window.SPESE_APP_READY = true;
       const msg = document.getElementById("authMsg");

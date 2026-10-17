@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
 import {
   initializeAuth, onAuthStateChanged,
-  signInWithEmailAndPassword, signOut, browserLocalPersistence
+  signInWithEmailAndPassword, sendPasswordResetEmail, signOut, browserLocalPersistence
 } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 import {
   getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
@@ -24,7 +24,7 @@ const fb = initializeApp(firebaseConfig);
 // direttamente all'inizializzazione e non viene più attesa a ogni login.
 const auth = initializeAuth(fb,{persistence:browserLocalPersistence});
 // Configura questo UID dopo aver creato l’unico account in Firebase Authentication.
-const OWNER_UID = "L4fFMpxAl1RWVc8wdjxRqlwdMzl2";
+const OWNER_UID = "yMj6leDGaLRKlT1UdFTZ2mmZYi32";
 
 // Cache Firestore persistente: al riavvio i dati già letti possono comparire
 // dalla cache locale mentre Firestore aggiorna in background.
@@ -266,6 +266,29 @@ document.querySelector("#authForm").onsubmit=async e=>{
     if(!user) submit.textContent=defaultLabel;
   }
 };
+document.querySelector("#resetPasswordBtn").onclick=async()=>{
+  const emailInput=document.querySelector("#email");
+  const email=emailInput.value.trim();
+  const msg=document.querySelector("#authMsg");
+  const btn=document.querySelector("#resetPasswordBtn");
+  if(!email){
+    msg.textContent="Inserisci la tua email e poi premi Password dimenticata?.";
+    emailInput.focus();
+    return;
+  }
+  btn.disabled=true;
+  msg.textContent="Invio dell'email di recupero…";
+  try{
+    await sendPasswordResetEmail(auth,email);
+    msg.textContent="Se l'indirizzo è registrato, riceverai un'email per scegliere una nuova password. Controlla anche lo spam.";
+  }catch(err){
+    console.error("Recupero password",err);
+    if(err?.code==="auth/invalid-email")msg.textContent="Indirizzo email non valido.";
+    else if(err?.code==="auth/too-many-requests")msg.textContent="Troppi tentativi: riprova più tardi.";
+    else if(err?.code==="auth/network-request-failed")msg.textContent="Connessione assente: riprova quando sei online.";
+    else msg.textContent="Impossibile inviare l'email di recupero. Riprova più tardi.";
+  }finally{btn.disabled=false;}
+};
 document.querySelector("#logoutBtn").onclick=()=>signOut(auth);
 function translateAuthError(code){
   if(code?.includes("invalid-credential"))return "Email o password non corretti.";
@@ -283,6 +306,9 @@ onAuthStateChanged(auth, u=>{
   clearTimeout(syncRenderTimer);
   unsubscribers.forEach(x=>x());unsubscribers=[];
   syncStates={};
+  // Non mostrare mai a un nuovo account i movimenti rimasti in memoria
+  // dalla sessione precedente: i dati Firestore sono separati per UID.
+  state={bills:[],expenses:[],incomes:[]};
   user=u;
   if(!u){authView.classList.remove("hidden");appView.classList.add("hidden");return}
   if(OWNER_UID === "INSERISCI_UID_COGNATO" || u.uid !== OWNER_UID){

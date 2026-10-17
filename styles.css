@@ -869,3 +869,8 @@ nav button[data-page="movimenti"].active,nav button[data-page="categorie"].activ
 .sp-compare-neutral{background:#e9eff8;color:#536781}
 .sp-compare-foot button{border:0;background:transparent;color:#1476df;font-weight:750;font-size:11px;padding:6px 2px}
 @media(max-width:760px){.sp-compare-grid{grid-template-columns:1fr}.sp-compare-card{padding:14px}.sp-compare-amounts strong{font-size:19px}}
+
+/* Link recupero password: stesso stile discreto della schermata accesso. */
+.auth-card .forgot-password{background:transparent;color:#2563b6;border:0;box-shadow:none;padding:6px 4px;min-height:36px;text-align:center;font-weight:650;font-size:13px}
+.auth-card .forgot-password:disabled{opacity:.55;cursor:wait}
+.auth-card .forgot-password:focus-visible{outline:2px solid #2563b6;outline-offset:3px}
