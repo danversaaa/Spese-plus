@@ -843,3 +843,29 @@ nav button[data-page="movimenti"].active,nav button[data-page="categorie"].activ
  .sp-sub-kpis b{font-size:19px}
 }
 @media(max-width:365px){.sp-welcome h1{font-size:22px}.sp-welcome-actions{gap:4px}.sp-blue-pair strong{font-size:18px}.sp-month-switch span{font-size:13px}.sp-blue-details{font-size:10px}.sp-tile b{font-size:11px}}
+
+/* Spese+ 1.2.0 · Indicatore filtro attivo (grafica Casa+ invariata) */
+.sp-filter-notice{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin:12px 0 16px;padding:12px 14px;border:1px solid #d7e8fa;border-radius:16px;background:#edf6ff;color:#193c67;font-size:13px;line-height:1.5}
+.sp-filter-notice strong{font-weight:800}
+.sp-filter-notice button{border:0;background:#fff;color:#0877df;border-radius:999px;padding:9px 12px;font:inherit;font-weight:800;cursor:pointer}
+
+
+/* Spese+ 1.3.0 — Confronto spese per categoria, stesso stile Casa+ */
+.sp-compare-panel{margin-top:14px}
+.sp-compare-description{margin:0 0 13px;font-size:12px;color:#71839a;line-height:1.5}
+.sp-compare-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+.sp-compare-card{background:#f9fbff;border:1px solid #e5edf8;border-radius:17px;padding:13px;min-width:0;display:grid;gap:12px}
+.sp-compare-heading{display:flex;align-items:center;gap:9px;min-width:0;color:#112a4c}
+.sp-compare-heading b{font-size:14px;line-height:1.3;overflow-wrap:anywhere}
+.sp-compare-heading .sp-activity-icon{width:34px;height:34px;border-radius:11px;font-size:16px}
+.sp-compare-amounts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.sp-compare-amounts>div{display:grid;gap:5px;min-width:0}
+.sp-compare-amounts small{color:#73859d;font-size:10px;line-height:1.3}
+.sp-compare-amounts strong{color:#142d4f;font-size:16px;white-space:nowrap;letter-spacing:-.025em}
+.sp-compare-foot{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.sp-compare-badge{display:inline-flex;align-items:center;border-radius:10px;padding:7px 9px;font-size:11px;line-height:1.35;font-weight:750}
+.sp-compare-saving{background:#dcf7ec;color:#087d56}
+.sp-compare-increase{background:#ffe7ea;color:#b42342}
+.sp-compare-neutral{background:#e9eff8;color:#536781}
+.sp-compare-foot button{border:0;background:transparent;color:#1476df;font-weight:750;font-size:11px;padding:6px 2px}
+@media(max-width:760px){.sp-compare-grid{grid-template-columns:1fr}.sp-compare-card{padding:14px}.sp-compare-amounts strong{font-size:19px}}

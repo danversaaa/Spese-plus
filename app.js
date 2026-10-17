@@ -48,16 +48,37 @@ let registerMode = false;
 let user = null;
 let page = "dashboard";
 let selectedYear = new Date().getFullYear();
-let utilitySummaryYear = selectedYear;
 let unsubscribers = [];
 let syncRenderTimer = null;
+let syncGeneration = 0;
+let syncStates = {};
+const SYNC_COLLECTIONS = ["bills","expenses","incomes"];
+function updateSyncStatus(){
+  if(!user)return;
+  const statuses=SYNC_COLLECTIONS.map(name=>syncStates[name]||{ready:false,fromCache:false,pending:false,error:false});
+  if(statuses.some(s=>s.error)){
+    syncEl.textContent="Errore sincronizzazione · verifica connessione e permessi";
+    return;
+  }
+  if(!navigator.onLine){
+    syncEl.textContent=statuses.every(s=>s.ready)?"Offline · dati locali (da verificare)":"Offline · connessione assente";
+    return;
+  }
+  if(!statuses.every(s=>s.ready)){
+    syncEl.textContent="Caricamento dati…";
+    return;
+  }
+  if(statuses.some(s=>s.pending)){
+    syncEl.textContent="Modifiche in attesa di sincronizzazione…";
+    return;
+  }
+  syncEl.textContent=statuses.some(s=>s.fromCache)?"Dati locali · sincronizzazione in corso…":"Dati sincronizzati";
+}
+window.addEventListener("online",updateSyncStatus);
+window.addEventListener("offline",updateSyncStatus);
 let state = { bills:[], expenses:[], incomes:[] };
-let readingsUtilityFilter = "Tutte";
-let billUtilityFilter = "Luce";
 
 const utilities = ["Luce"];
-const readingUtilities = ["Luce","Acqua","Gas"];
-const readingUnits = ["kWh","m³","Smc"];
 const statuses = ["Pagata","Da pagare","Scaduta","Rateizzata","Contestata"];
 const months = ["Gen","Feb","Mar","Apr","Mag","Giu","Lug","Ago","Set","Ott","Nov","Dic"];
 const euro = new Intl.NumberFormat("it-IT",{style:"currency",currency:"EUR"});
@@ -211,22 +232,6 @@ function normalizeBillRecord(raw){
 
   // Lo stato salvato dall'utente è sempre autorevole.
   // Non forziamo lo stato in base a utenza, importo, anno o scadenza.
-  const amount=Number(b.importo);
-  const u=String(b.utenza||"").toLowerCase();
-
-  // Correzioni confermate dall'utente per settembre 2026. Si applicano solo
-  // alle due vecchie bollette identificabili in modo univoco dai loro dati.
-  if(!isPaid(b) && u==="acqua" && Math.abs(amount-48.07)<0.001 && String(b.scadenza)==="2026-08-31"){
-    b.stato="Pagata";b.dataPagamento="2026-09-16";
-    // Mantiene la competenza originale della bolletta (Acqua: luglio 2026),
-    // ma garantisce che il riepilogo annuale la includa correttamente.
-    b.anno=2026;b.mese=Number(b.mese)||7;b.competenze=[{anno:2026,importo:amount}];b._compatRecovered=true;
-  }
-  if(!isPaid(b) && u==="fibra" && Math.abs(amount-27.95)<0.001 && String(b.scadenza)==="2026-08-27"){
-    b.stato="Pagata";b.dataPagamento="2026-09-16";
-    // Fibra resta di competenza agosto 2026; il pagamento è settembre.
-    b.anno=2026;b.mese=Number(b.mese)||8;b.competenze=[{anno:2026,importo:amount}];b._compatRecovered=true;
-  }
   return b;
 }
 function pathFor(name){return collection(db,"users",user.uid,name)}
@@ -274,7 +279,10 @@ function translateAuthError(code){
 }
 
 onAuthStateChanged(auth, u=>{
+  syncGeneration++;
+  clearTimeout(syncRenderTimer);
   unsubscribers.forEach(x=>x());unsubscribers=[];
+  syncStates={};
   user=u;
   if(!u){authView.classList.remove("hidden");appView.classList.add("hidden");return}
   if(OWNER_UID === "INSERISCI_UID_COGNATO" || u.uid !== OWNER_UID){
@@ -292,15 +300,27 @@ onAuthStateChanged(auth, u=>{
 });
 
 function subscribeAll(){
-  syncEl.textContent="Sincronizzazione cloud…";
-  ["bills","expenses","incomes"].forEach(name=>{
-    const un=onSnapshot(pathFor(name), snap=>{
-      state[name]=snap.docs.map(d=>{const row={id:d.id,...d.data()};return name==="bills"?normalizeBillRecord(row):row;});
-      syncEl.textContent="Dati sincronizzati";
+  const generation=syncGeneration;
+  syncStates=Object.fromEntries(SYNC_COLLECTIONS.map(name=>[name,{ready:false,fromCache:false,pending:false,error:false}]));
+  updateSyncStatus();
+  SYNC_COLLECTIONS.forEach(name=>{
+    const un=onSnapshot(pathFor(name),{includeMetadataChanges:true},snap=>{
+      if(generation!==syncGeneration)return;
+      state[name]=snap.docs.map(d=>{
+        const row={id:d.id,...d.data()};
+        return name==="bills"?normalizeBillRecord(row):row;
+      });
+      syncStates[name]={ready:true,fromCache:snap.metadata.fromCache,pending:snap.metadata.hasPendingWrites,error:false};
+      updateSyncStatus();
       refreshYears();
       clearTimeout(syncRenderTimer);
-      syncRenderTimer=setTimeout(()=>render(),35);
-    }, err=>{syncEl.textContent="Errore sincronizzazione";console.error(err)});
+      syncRenderTimer=setTimeout(()=>{if(generation===syncGeneration)render()},35);
+    },err=>{
+      if(generation!==syncGeneration)return;
+      syncStates[name]={...syncStates[name],error:true};
+      updateSyncStatus();
+      console.error("Sincronizzazione "+name,err);
+    });
     unsubscribers.push(un);
   });
 }
@@ -313,19 +333,9 @@ function refreshYears(){
   years.push(selectedYear);
   const ys=[...new Set(years.filter(Boolean))].sort((a,b)=>b-a);
   if(!ys.includes(selectedYear))selectedYear=ys[0];
-  if(!ys.includes(utilitySummaryYear))utilitySummaryYear=selectedYear;
   yearSelect.innerHTML=ys.map(y=>`<option ${y===selectedYear?"selected":""}>${y}</option>`).join("");
 }
 yearSelect.onchange=e=>{selectedYear=Number(e.target.value);render()};
-function availableBillYears(){
-  const years=[];
-  state.bills.forEach(b=>{billCompetences(b).forEach(c=>years.push(Number(c.anno)));const py=paymentYear(b);if(py)years.push(py)});
-  years.push(new Date().getFullYear(),utilitySummaryYear);
-  return [...new Set(years.filter(Boolean))].sort((a,b)=>b-a);
-}
-function utilitySummaryYearOptions(){return availableBillYears().map(y=>`<option value="${y}" ${Number(y)===Number(utilitySummaryYear)?'selected':''}>${y}</option>`).join('')}
-window.changeUtilitySummaryYear=value=>{utilitySummaryYear=Number(value)||new Date().getFullYear();selectedYear=utilitySummaryYear;ensureYearInSelector(selectedYear);renderDashboard()};
-
 function setActiveNav(){
   document.querySelectorAll("nav button").forEach(x=>x.classList.remove("active"));
   const direct=document.querySelector(`nav button[data-page="${page}"]`);
@@ -339,6 +349,8 @@ function setActiveNav(){
 window.goPage=p=>{
   if(!["dashboard","movimenti","categorie","spese","entrate","bollette","statistiche","impostazioni","altro"].includes(p))p="dashboard";
   if(p==="bollette"){billHomeScope=null;billStatusTab="all";}
+  if(p==="spese"&&!categoryShortcutPending)financeFilter="Tutte";
+  categoryShortcutPending=false;
   page=p;setActiveNav();render();window.scrollTo({top:0,behavior:"smooth"});
 };
 document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
@@ -353,8 +365,6 @@ function render(){
   titleEl.textContent=({dashboard:"Spese+",movimenti:"Movimenti",categorie:"Categorie",bollette:"Bollette Luce",spese:"Spese",entrate:"Entrate",statistiche:"Statistiche",impostazioni:"Impostazioni",altro:"Altro"})[page]||"Spese+";
   ({dashboard:renderFinanceDashboard,movimenti:renderFinanceMovements,categorie:renderFinanceCategories,bollette:renderBills,spese:renderExpenses,entrate:renderIncomes,statistiche:renderFinanceStats,impostazioni:renderFinanceSettings,altro:renderFinanceMore})[page]();
 }
-function yearBills(){return state.bills.filter(b=>hasCompetenceYear(b,selectedYear))}
-function monthDivisor(){const n=new Date(),y=selectedYear;if(y<n.getFullYear())return 12;if(y>n.getFullYear())return 1;return n.getMonth()+1}
 
 function paymentMonth(b){
   const s=String(b.dataPagamento||"");
@@ -362,72 +372,7 @@ function paymentMonth(b){
   return m?{year:Number(m[1]),month:Number(m[2])}:null;
 }
 function paidInMonth(b,year,month){const p=paymentMonth(b);return isPaid(b)&&p&&p.year===Number(year)&&p.month===Number(month)}
-function currentMonthAmount(b,year,month){return monthlyCompetenceAmount(b,year,month)}
 
-function parseConsumptionNumber(value){
-  if(value===null||value===undefined||value==='')return null;
-  if(typeof value==='number')return Number.isFinite(value)?value:null;
-  let s=String(value).trim().replace(/\s/g,'');
-  if(!s)return null;
-  // Formati italiani: 1.234,56 / 391,5. Formati standard: 1234.56.
-  if(s.includes(',')&&s.includes('.'))s=s.replace(/\./g,'').replace(',','.');
-  else if(s.includes(','))s=s.replace(',','.');
-  s=s.replace(/[^0-9.+-]/g,'');
-  const n=Number(s);
-  return Number.isFinite(n)?n:null;
-}
-function billPeriodSortKey(b){
-  const end=effectivePeriodEnd(b.periodoInizio,b.periodoFine);
-  if(end)return `${end}-31`;
-  const start=normalizeMonthKey(b.periodoInizio);
-  if(start)return `${start}-31`;
-  if(/^\d{4}-\d{2}-\d{2}/.test(String(b.dataEmissione||'')))return String(b.dataEmissione).slice(0,10);
-  if(/^\d{4}-\d{2}-\d{2}/.test(String(b.scadenza||'')))return String(b.scadenza).slice(0,10);
-  const y=Number(b.anno),m=Number(b.mese);
-  if(Number.isFinite(y)&&y>1900&&Number.isFinite(m)&&m>=1&&m<=12)return `${y}-${String(m).padStart(2,'0')}-31`;
-  return '';
-}
-function percentageChange(current,previous){
-  const cur=parseConsumptionNumber(current),prev=parseConsumptionNumber(previous);
-  if(cur===null||prev===null||cur<=0||prev<=0)return null;
-  return Math.round(((cur-prev)/prev)*100);
-}
-function billConsumptionTrend(utility){
-  const key=String(utility||'').toLowerCase();
-  const arr=state.bills
-    .filter(b=>String(b.utenza||'').toLowerCase()===key)
-    .map(b=>({b,value:parseConsumptionNumber(b.consumo),sortKey:billPeriodSortKey(b)}))
-    .filter(x=>x.value!==null&&x.value>0&&x.sortKey)
-    .sort((a,b)=>b.sortKey.localeCompare(a.sortKey));
-  if(arr.length<2)return null;
-  return percentageChange(arr[0].value,arr[1].value);
-}
-function readingTrend(utility){
-  const key=String(utility||'').toLowerCase();
-  // Luce e Gas: la Home confronta prima di tutto i consumi delle ultime due bollette.
-  // È la stessa fonte mostrata/modificata nella sezione Bollette.
-  if(key==='luce'||key==='gas'){
-    const billTrend=billConsumptionTrend(utility);
-    if(billTrend!==null)return billTrend;
-  }
-  // Acqua (e fallback Luce/Gas): usa le letture contatore. Per l'acqua
-  // confrontiamo le medie giornaliere ricalcolate, per periodi di durata diversa.
-  const isWater=key==='acqua';
-  const metric=r=>{
-    if(isWater){
-      const wm=waterMetrics(r);
-      return parseConsumptionNumber(wm.mediaRaw ?? wm.media);
-    }
-    return parseConsumptionNumber(r.consumo);
-  };
-  const arr=state.readings
-    .filter(r=>String(r.utenza||'').toLowerCase()===key)
-    .map(r=>({r,value:metric(r)}))
-    .filter(x=>x.value!==null&&x.value>0)
-    .sort((a,b)=>String(b.r.periodoAl||b.r.data||'').localeCompare(String(a.r.periodoAl||a.r.data||'')));
-  if(arr.length<2)return null;
-  return percentageChange(arr[0].value,arr[1].value);
-}
 function longItalianDate(d=new Date()){
   const weekdays=["Domenica","Lunedì","Martedì","Mercoledì","Giovedì","Venerdì","Sabato"];
   return `${weekdays[d.getDay()]} ${d.getDate()} ${monthNamesLong[d.getMonth()].toLowerCase()} ${d.getFullYear()}`;
@@ -444,11 +389,18 @@ const FINANCE_CATEGORIES=["Alimentari","Pranzi e cene","Trasporti","Casa","Salut
 const FINANCE_ICONS={"Alimentari":"🛒","Pranzi e cene":"🍽️","Trasporti":"🚌","Casa":"⌂","Salute":"♡","Tempo libero":"◉","Abbonamenti":"▣","Shopping":"◈","Altro":"•••","Luce":"⚡"};
 let financeMonth=new Date().getMonth()+1;
 let financeFilter="Tutte";
+let categoryShortcutPending=false;
 function financeKey(y=selectedYear,m=financeMonth){return buildMonthKey(y,m)}
 function financeAmount(v){const n=Number(v);return Number.isFinite(n)?n:0}
 function sumAmounts(items){return items.reduce((sum,x)=>sum+financeAmount(x.amount),0)}
 function financeMonthItems(items,key){return items.filter(x=>String(x.date||"").slice(0,7)===key)}
-function paidLightMonth(key){return state.bills.filter(b=>b.utenza==="Luce"&&isPaid(b)&&String(b.dataPagamento||"").slice(0,7)===key)}
+function paidLightMonth(key){
+  // La data di pagamento determina il mese del movimento e del saldo.
+  // Una bolletta = un solo movimento virtuale, mai una spesa duplicata in Firestore.
+  return state.bills.filter(b=>String(b.utenza||"").trim().toLowerCase()==="luce" && isPaid(b)
+    && /^\d{4}-\d{2}-\d{2}$/.test(String(b.dataPagamento||""))
+    && String(b.dataPagamento).slice(0,7)===key);
+}
 function financeSummary(key){
   const expenses=financeMonthItems(state.expenses,key);
   const incomes=financeMonthItems(state.incomes,key);
@@ -467,6 +419,7 @@ function financeTrend(current,previous){
 window.changeFinanceMonth=delta=>{
   const index=selectedYear*12+financeMonth-1+Number(delta);
   selectedYear=Math.floor(index/12);financeMonth=index%12+1;
+  if(page==="spese")financeFilter="Tutte";
   ensureYearInSelector(selectedYear);render();
 };
 function financeMonthHeader(){return `<div class="finance-month-bar"><button class="ghost" onclick="window.changeFinanceMonth(-1)" aria-label="Mese precedente">‹</button><b>${monthNamesLong[financeMonth-1]} ${selectedYear}</b><button class="ghost" onclick="window.changeFinanceMonth(1)" aria-label="Mese successivo">›</button></div>`}
@@ -475,6 +428,45 @@ function financeCategoryTotals(key){
   financeMonthItems(state.expenses,key).forEach(x=>totals.set(x.category||"Altro",(totals.get(x.category||"Altro")||0)+financeAmount(x.amount)));
   const light=financeSummary(key).electricity;if(light)totals.set("Luce",(totals.get("Luce")||0)+light);
   return [...totals.entries()].sort((a,b)=>b[1]-a[1]);
+}
+// Confronti sulle SPESE: una variazione positiva di costo è sfavorevole.
+// Si includono anche le categorie presenti soltanto nel mese precedente.
+function financeCategoryComparisons(key=financeKey(),previousKey=previousFinanceKey()){
+  const current=new Map(financeCategoryTotals(key));
+  const previous=new Map(financeCategoryTotals(previousKey));
+  return [...new Set([...current.keys(),...previous.keys()])].map(name=>{
+    const amount=Math.round((current.get(name)||0)*100)/100;
+    const before=Math.round((previous.get(name)||0)*100)/100;
+    const difference=Math.round((amount-before)*100)/100;
+    const percentage=before>0?Math.round((difference/before)*1000)/10:null;
+    const status=difference<0?'saving':difference>0?(before===0?'new':'increase'):'same';
+    return {name,amount,before,difference,percentage,status};
+  }).sort((a,b)=>b.amount-a.amount||b.before-a.before||a.name.localeCompare(b.name,'it'));
+}
+function financeComparisonBadge(item){
+  const abs=money(Math.abs(item.difference));
+  if(item.status==='saving')return `<span class="sp-compare-badge sp-compare-saving">↓ Risparmio ${abs} (${Math.abs(item.percentage).toLocaleString('it-IT',{maximumFractionDigits:1})}%)</span>`;
+  if(item.status==='increase')return `<span class="sp-compare-badge sp-compare-increase">↑ Spesa maggiore ${abs} (+${item.percentage.toLocaleString('it-IT',{maximumFractionDigits:1})}%)</span>`;
+  if(item.status==='new')return `<span class="sp-compare-badge sp-compare-neutral">Nuova spesa ${abs} · % non calcolabile</span>`;
+  return `<span class="sp-compare-badge sp-compare-neutral">Spesa invariata · 0%</span>`;
+}
+function financeComparisonCards(items){
+  return items.map(item=>{
+    const click=item.name==='Luce'?'window.goPage(\'bollette\')':`window.openFinanceCategory(${JSON.stringify(item.name).replace(/"/g,'&quot;')})`;
+    return `<article class="sp-compare-card">
+      <div class="sp-compare-heading"><span class="sp-activity-icon sp-icon-${financeCategoryTone(item.name)}">${FINANCE_ICONS[item.name]||'•'}</span><b>${esc(item.name)}</b></div>
+      <div class="sp-compare-amounts"><div><small>Mese selezionato</small><strong>${money(item.amount)}</strong></div><div><small>Mese precedente</small><strong>${money(item.before)}</strong></div></div>
+      <div class="sp-compare-foot">${financeComparisonBadge(item)}<button type="button" onclick="${click}" aria-label="Apri ${esc(item.name)}">Dettagli ›</button></div>
+    </article>`;
+  }).join('');
+}
+function financeCategoryComparisonPanel(limit=0){
+  const items=financeCategoryComparisons(),shown=limit?items.slice(0,limit):items;
+  const now=new Date();
+  const partial=selectedYear===now.getFullYear()&&financeMonth===now.getMonth()+1;
+  return `<section class="sp-panel sp-compare-panel"><div class="sp-panel-head"><h2>Confronto per categoria</h2>${limit?'<button type="button" onclick="window.goPage(\'categorie\')">Vedi tutte ›</button>':''}</div>
+    <p class="sp-compare-description">${esc(monthLabel(financeKey()))} rispetto a ${esc(monthLabel(previousFinanceKey()))}. ${partial?'Mese in corso: confronto provvisorio.':'Un importo inferiore indica un risparmio.'}</p>
+    ${shown.length?`<div class="sp-compare-grid">${financeComparisonCards(shown)}</div>`:'<p class="sp-empty">Nessuna spesa nei due mesi da confrontare.</p>'}</section>`;
 }
 function financeIconSvg(name){
   const paths={
@@ -505,14 +497,11 @@ function financeHomeRows(items,kind,limit=4){
     const name=bill?'Bolletta Luce':(x.description||x.category||(income?'Entrata':'Spesa'));
     const icon=bill?'⚡':income?'€':(FINANCE_ICONS[x.category]||'•');
     const tone=bill?'light':income?'green':financeCategoryTone(x.category);
-    const click=bill?`window.goPage('bollette')`:income?`window.editIncome('${x.id}')`:`window.editExpense('${x.id}')`;
+    const click=bill?`window.editBill('${x.id}')`:income?`window.editIncome('${x.id}')`:`window.editExpense('${x.id}')`;
     return `<button type="button" class="sp-activity-row" onclick="${click}"><span class="sp-activity-icon sp-icon-${tone}">${icon}</span><span class="sp-activity-main"><b>${esc(name)}</b><small>${fmtDate(x.date)}${bill?' · Luce':x.category?' · '+esc(x.category):''}</small></span><strong class="${income?'sp-positive':'sp-negative'}">${income?'+':'−'} ${money(bill?x.amount:x.amount)}</strong><span class="sp-chevron">›</span></button>`;
   }).join('');
 }
 function financeCategoryTone(name){return ({'Alimentari':'green','Pranzi e cene':'blue','Trasporti':'amber','Casa':'pink','Salute':'pink','Tempo libero':'violet','Abbonamenti':'blue','Shopping':'amber','Luce':'pink'})[name]||'gray'}
-function financeMonthPicker(){
-  return `<div class="sp-month-switch"><button type="button" onclick="window.changeFinanceMonth(-1)" aria-label="Mese precedente">‹</button><span>${monthNamesLong[financeMonth-1].toUpperCase()} ${selectedYear}</span><button type="button" onclick="window.changeFinanceMonth(1)" aria-label="Mese successivo">›</button></div>`;
-}
 function renderFinanceDashboard(){
   const now=new Date(),key=financeKey(),prev=previousFinanceKey(),cur=financeSummary(key),old=financeSummary(prev);
   const expenses=financeMonthItems(state.expenses,key);
@@ -536,13 +525,16 @@ function renderFinanceDashboard(){
 function renderFinanceMovements(){
   const key=financeKey(),s=financeSummary(key);
   const all=[...financeMonthItems(state.expenses,key).map(x=>({...x,kind:'expense'})),...financeMonthItems(state.incomes,key).map(x=>({...x,kind:'income'})),...s.light.map(b=>({id:b.id,amount:b.importo,date:b.dataPagamento,kind:'bill'}))].sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
-  pageEl.innerHTML=`<div class="finance-screen sp-subpage">${financeMonthHeader()}<div class="sp-sub-kpis"><div><small>Entrate</small><b class="sp-positive">${money(s.income)}</b></div><div><small>Spese</small><b class="sp-negative">${money(s.expenses)}</b></div></div><section class="sp-panel"><div class="sp-panel-head"><h2>Movimenti del mese</h2><button type="button" onclick="window.openQuickAdd()">+ Aggiungi</button></div>${all.length?all.map(x=>financeHomeRows([x],x.kind,1)).join(''):'<p class="sp-empty">Nessun movimento registrato.</p>'}</section></div>`;
+  pageEl.innerHTML=`<div class="finance-screen sp-subpage">${financeMonthHeader()}<div class="sp-sub-kpis"><div><small>Entrate</small><b class="sp-positive">${money(s.income)}</b></div><div><small>Spese</small><b class="sp-negative">${money(s.expenses)}</b></div></div><section class="sp-panel"><div class="sp-panel-head"><h2>Movimenti del mese</h2><button type="button" onclick="window.openQuickAdd()">+ Aggiungi</button></div>${all.length?all.map(x=>financeHomeRows([x],x.kind,1)).join(''):'<p class="sp-empty">Nessun movimento registrato.</p>'}</section>${financeCategoryComparisonPanel(3)}</div>`;
 }
 function renderFinanceCategories(){
-  const key=financeKey(),prev=previousFinanceKey(),cats=financeCategoryTotals(key),old=new Map(financeCategoryTotals(prev));
-  pageEl.innerHTML=`<div class="finance-screen sp-subpage">${financeMonthHeader()}<section class="sp-panel"><div class="sp-panel-head"><h2>Spese per categoria</h2><button type="button" onclick="window.goPage('spese')">Tutte ›</button></div>${cats.length?cats.map(([name,total])=>{const before=old.get(name)||0;const trend=before?((total-before)/before*100):null;const go=name==='Luce'?"window.goPage('bollette')":`window.openFinanceCategory('${esc(name)}')`;return `<button class="sp-category-row" type="button" onclick="${go}"><span class="sp-activity-icon sp-icon-${financeCategoryTone(name)}">${FINANCE_ICONS[name]||'•'}</span><span class="sp-activity-main"><b>${esc(name)}</b><small>${trend===null?'Nessun confronto col mese precedente':`${trend>0?'+':''}${trend.toLocaleString('it-IT',{maximumFractionDigits:1})}% rispetto al mese precedente`}</small></span><strong>${money(total)}</strong><span class="sp-chevron">›</span></button>`}).join(''):'<p class="sp-empty">Nessuna spesa registrata nel mese.</p>'}</section></div>`;
+  pageEl.innerHTML=`<div class="finance-screen sp-subpage">${financeMonthHeader()}${financeCategoryComparisonPanel()}</div>`;
 }
-window.openFinanceCategory=name=>{financeFilter=name;window.goPage('spese')};
+window.openFinanceCategory=name=>{
+  financeFilter=FINANCE_CATEGORIES.includes(name)?name:"Tutte";
+  categoryShortcutPending=true;
+  window.goPage('spese');
+};
 
 function financeItemRows(items,kind){
   if(!items.length)return '<div class="home-empty">Nessuna registrazione per questo mese.</div>';
@@ -552,15 +544,18 @@ function renderExpenses(){
   const key=financeKey(),items=financeMonthItems(state.expenses,key);
   const shown=financeFilter==='Tutte'?items:items.filter(x=>x.category===financeFilter);
   const sum=sumAmounts(shown),light=financeSummary(key).electricity;
+  const filtered=financeFilter!=="Tutte";
   pageEl.innerHTML=`<div class="finance-screen">${financeMonthHeader()}
-    <section class="finance-hero"><span>SPESE REGISTRATE</span><strong>${money(sum+ (financeFilter==='Tutte'?light:0))}</strong><small>Bollette Luce pagate incluse nel totale generale</small></section>
+    <section class="finance-hero"><span>${filtered?'SPESE FILTRATE':'SPESE REGISTRATE'}</span><strong>${money(sum+ (filtered?0:light))}</strong><small>${filtered?'Totale della categoria selezionata':'Bollette Luce pagate incluse nel totale generale'}</small></section>
     <section class="card section"><div class="section-head"><h2>Le tue spese</h2><button class="primary" onclick="window.editExpense()">+ Aggiungi</button></div>
       <label class="field">Categoria<select onchange="window.setFinanceFilter(this.value)">${['Tutte',...FINANCE_CATEGORIES].map(c=>`<option value="${esc(c)}" ${c===financeFilter?'selected':''}>${esc(c)}</option>`).join('')}</select></label>
+      ${filtered?`<div class="sp-filter-notice"><span>Filtro attivo: <strong>${esc(financeFilter)}</strong> · ${shown.length} ${shown.length===1?'movimento':'movimenti'}</span><button type="button" onclick="window.clearFinanceFilter()">Mostra tutte ×</button></div>`:''}
       ${financeItemRows(shown,'expense')}
       ${financeFilter==='Tutte'&&light?`<button class="finance-entry-row" onclick="window.goPage('bollette')"><span class="finance-entry-icon">⚡</span><span class="finance-entry-main"><b>Bolletta Luce</b><small>Pagamenti del mese</small></span><strong>-${money(light)}</strong><span>›</span></button>`:''}
-    </section></div>`;
+    </section>${filtered?`<section class="sp-panel sp-compare-panel"><div class="sp-panel-head"><h2>Confronto con il mese scorso</h2></div><div class="sp-compare-grid">${financeComparisonCards(financeCategoryComparisons().filter(x=>x.name===financeFilter))}</div></section>`:''}</div>`;
 }
-window.setFinanceFilter=v=>{financeFilter=v;renderExpenses()};
+window.setFinanceFilter=v=>{financeFilter=FINANCE_CATEGORIES.includes(v)?v:"Tutte";renderExpenses()};
+window.clearFinanceFilter=()=>{financeFilter="Tutte";renderExpenses()};
 function renderIncomes(){
   const key=financeKey(),items=financeMonthItems(state.incomes,key);
   pageEl.innerHTML=`<div class="finance-screen">${financeMonthHeader()}<section class="finance-hero"><span>ENTRATE DEL MESE</span><strong>${money(sumAmounts(items))}</strong><small>Stipendio e altre entrate</small></section><section class="card section"><div class="section-head"><h2>Entrate</h2><button class="primary" onclick="window.editIncome()">+ Aggiungi</button></div>${financeItemRows(items,'income')}</section></div>`;
@@ -605,62 +600,6 @@ function renderFinanceStats(){
 function renderFinanceMore(){pageEl.innerHTML=`<div class="card section"><h2>Altre funzioni</h2><div class="more-grid"><button class="more-item" onclick="window.goPage('entrate')"><span class="more-icon">€</span><span><strong>Entrate</strong><small>Stipendio e altre entrate</small></span><span class="more-chevron">›</span></button><button class="more-item" onclick="window.goPage('spese')"><span class="more-icon">▤</span><span><strong>Spese</strong><small>Elenco e filtri</small></span><span class="more-chevron">›</span></button><button class="more-item" onclick="window.goPage('bollette')"><span class="more-icon">⚡</span><span><strong>Bollette Luce</strong><small>Pagamenti e scadenze</small></span><span class="more-chevron">›</span></button><button class="more-item" onclick="window.goPage('statistiche')"><span class="more-icon">▥</span><span><strong>Statistiche</strong><small>Confronti mensili e categorie</small></span><span class="more-chevron">›</span></button><button class="more-item" onclick="window.goPage('impostazioni')"><span class="more-icon">⚙</span><span><strong>Impostazioni</strong><small>Account e backup</small></span><span class="more-chevron">›</span></button></div></div>`}
 function renderFinanceSettings(){pageEl.innerHTML=`<div class="card section"><h2>Account</h2><p>${esc(user?.email||'')}</p><p class="muted">Accesso riservato all’unico utente autorizzato.</p></div><div class="card section" style="margin-top:14px"><h2>Backup</h2><p class="muted">Esporta bollette Luce, spese ed entrate in formato JSON.</p><button class="primary" onclick="window.exportBackup()">Scarica backup</button></div>`}
 // ======================= Fine gestione Spese+ =======================
-
-function renderDashboard(){
-  const now=new Date();
-  const homeMonth=selectedYear===now.getFullYear()?now.getMonth()+1:1;
-  const competenceBills=state.bills.filter(b=>billTouchesMonth(b,selectedYear,homeMonth));
-  // Nel riquadro Home separiamo tre concetti:
-  // 1) pagato nel mese = dataPagamento nel mese selezionato;
-  // 2) da pagare nel mese = bollette ancora aperte con SCADENZA nel mese selezionato;
-  // 3) totale annuale = competenza dell'anno selezionato.
-  const monthPaidCash=state.bills.filter(b=>paidInMonth(b,selectedYear,homeMonth)).reduce((a,b)=>a+Number(b.importo||0),0);
-  const dueInSelectedMonth=state.bills.filter(b=>{
-    if(isPaid(b)||!b.scadenza)return false;
-    const m=String(b.scadenza).match(/^(\d{4})-(\d{2})/);
-    return !!m&&Number(m[1])===Number(selectedYear)&&Number(m[2])===Number(homeMonth);
-  });
-  const monthDueByDeadline=dueInSelectedMonth.reduce((a,b)=>a+Number(b.importo||0),0);
-  const overdueTotal=state.bills.filter(b=>isOverdue(b)).reduce((a,b)=>a+Number(b.importo||0),0);
-  const annualTotal=state.bills.filter(b=>hasCompetenceYear(b,selectedYear)).reduce((a,b)=>a+competenceAmount(b,selectedYear),0);
-  const upcoming=state.bills.filter(b=>!isPaid(b)&&b.scadenza).sort((a,b)=>String(a.scadenza).localeCompare(String(b.scadenza))).slice(0,3);
-  const recentPaid=state.bills.filter(b=>isPaid(b)&&b.dataPagamento).sort((a,b)=>String(b.dataPagamento).localeCompare(String(a.dataPagamento))).slice(0,4);
-  const upcomingHtml=upcoming.length?upcoming.map(b=>`<button class="home-row" onclick="window.editBill('${b.id}')"><span class="home-row-icon ${utilityTone(b.utenza)}">${utilIcon(b.utenza)}</span><span class="home-row-main"><b>${esc(b.utenza)}</b><small>${isOverdue(b)?'Scaduta':'Scade il'} ${fmtDate(b.scadenza)}</small></span><strong>${money(b.importo)}</strong><i>›</i></button>`).join(""):`<div class="home-empty">Nessuna scadenza aperta.</div>`;
-  const activity=recentPaid.map(b=>`<button class="home-row" onclick="window.editBill('${b.id}')"><span class="home-row-icon ${utilityTone(b.utenza)}">${utilIcon(b.utenza)}</span><span class="home-row-main"><b>${esc(b.utenza)}</b><small>Pagata il ${fmtDate(b.dataPagamento)}</small></span><strong>${money(b.importo)}</strong><i>›</i></button>`).join('');
-  const consumptionHtml=['Luce','Acqua','Gas'].map(u=>{const t=readingTrend(u);const cls=t===null?'neutral':t>0?'up':'down';const arrow=t===null?'•':t>0?'↑':'↓';const signed=t===null?'—':`${t>0?'+':''}${t}%`;return `<button class="consumption-card" onclick="window.goPage('letture')"><span>${utilIcon(u)} <b>${u}</b></span><strong class="${cls}">${arrow} ${signed}</strong><small>${t===null?'rispetto al periodo<br>precedente':t>0?'consumato di più rispetto<br>al periodo precedente':'consumato di meno rispetto<br>al periodo precedente'}</small></button>`}).join('');
-  pageEl.innerHTML=`
-    <section class="legacy-home-photo"><img src="./home-house.jpg" alt="Casa sul mare"></section>
-    <section class="home-welcome"><div><h2>${homeGreeting(now)}, <b>Daniele</b></h2><p>${longItalianDate(now)}</p></div></section>
-    <section class="home-blue-card"><div class="blue-top"><b>${monthNamesLong[homeMonth-1].toUpperCase()} ${selectedYear}</b><button onclick="window.goPage('bollette')">Vedi dettagli ›</button></div><div class="blue-body blue-metrics"><button type="button" class="blue-metric home-metric-button" onclick="window.openHomeMetric('paid',${selectedYear},${homeMonth})"><span>Pagato nel mese</span><strong>${money(monthPaidCash)}</strong><small>per data di pagamento</small><i class="metric-chevron">›</i></button><button type="button" class="blue-metric annual-metric home-metric-button" onclick="window.openHomeMetric('annual',${selectedYear},${homeMonth})"><span>Spese annuali totali</span><strong>${money(annualTotal)}</strong><small>competenza ${selectedYear}</small><i class="metric-chevron">›</i></button></div><div class="blue-split"><button type="button" class="home-metric-button split-metric" onclick="window.openHomeMetric('due',${selectedYear},${homeMonth})"><span>Da pagare nel mese</span><b><i class="orange-dot"></i>${money(monthDueByDeadline)}</b><i class="metric-chevron">›</i></button><button type="button" class="home-metric-button split-metric" onclick="window.openHomeMetric('overdue',${selectedYear},${homeMonth})"><span>Scadute</span><b><i class="red-dot"></i>${money(overdueTotal)}</b><i class="metric-chevron">›</i></button></div></section>
-    <section class="home-clean-section utility-summary-section"><div class="clean-head"><h2>Riepilogo utenze</h2><select class="summary-year-select" aria-label="Anno riepilogo utenze" onchange="window.changeUtilitySummaryYear(this.value)">${utilitySummaryYearOptions()}</select></div><div class="home-utility-grid">${utilities.map(u=>{const list=state.bills.filter(b=>String(b.utenza||'').toLowerCase()===u.toLowerCase()&&hasCompetenceYear(b,utilitySummaryYear));const paid=list.filter(isPaid).reduce((a,b)=>a+competenceAmount(b,utilitySummaryYear),0);const due=list.filter(b=>!isPaid(b)).reduce((a,b)=>a+competenceAmount(b,utilitySummaryYear),0);return `<button class="home-utility-card" onclick="window.showUtilityBills('${u}')"><span class="home-utility-icon ${utilityTone(u)}">${utilIcon(u)}</span><span><b>${esc(u)}</b><small>${list.length} ${list.length===1?'bolletta':'bollette'}${due>0?` · da pagare ${money(due)}`:''}</small></span><strong>${money(paid)}</strong><i>›</i></button>`}).join('')}</div></section>
-    <section class="home-clean-section"><div class="clean-head"><h2>Da non dimenticare</h2><button onclick="window.openUnpaidBills()">Vedi tutte ›</button></div><div class="home-list boxed-list">${upcomingHtml}</div></section>
-    <section class="home-clean-section"><div class="clean-head"><h2>I tuoi consumi</h2><button onclick="window.goPage('letture')">Vedi grafici ›</button></div><div class="consumption-grid">${consumptionHtml}</div></section>
-    <section class="home-clean-section"><div class="clean-head"><h2>Attività recenti</h2><button onclick="window.goPage('bollette')">Vedi tutte ›</button></div><div class="home-list boxed-list">${activity||'<div class="home-empty">Nessuna attività recente.</div>'}</div></section>`;
-}
-
-
-window.showUtilityBills=u=>{
-  const list=state.bills
-    .filter(b=>isPaid(b)&&b.utenza===u&&hasCompetenceYear(b,utilitySummaryYear))
-    .sort((a,b)=>String(b.dataPagamento||b.dataEmissione||"").localeCompare(String(a.dataPagamento||a.dataEmissione||"")));
-  const total=list.reduce((s,b)=>s+competenceAmount(b,utilitySummaryYear),0);
-  const rows=list.length?list.map(b=>`
-    <button type="button" class="utility-bill-row" onclick="window.closeModal();window.editBill('${b.id}')">
-      <span class="utility-bill-main">
-        <b>${utilIcon(b.utenza)} ${esc(formatPeriod(b))}</b>
-        <small>${b.dataPagamento?`Pagata ${fmtDate(b.dataPagamento)}`:`${esc(b.stato||"")}`}${b.note?` · ${esc(b.note)}`:""}</small>
-      </span>
-      <span class="utility-bill-values">
-        <strong>${money(competenceAmount(b,utilitySummaryYear))}</strong>
-        <small>su ${money(b.importo)}</small>
-      </span>
-    </button>`).join(""):`<div class="empty">Nessuna bolletta pagata di competenza ${utilitySummaryYear}.</div>`;
-  showModal(`<div class="modal-head"><div><div class="modal-kicker">Riepilogo ${utilitySummaryYear}</div><h2>${utilIcon(u)} ${esc(u)}</h2></div><button class="mini" onclick="window.closeModal()">×</button></div>
-    <div class="utility-modal-total"><span>Totale di competenza</span><strong>${money(total)}</strong></div>
-    <div class="utility-bill-list">${rows}</div>
-    <div class="modal-foot"><button class="ghost" onclick="window.closeModal()">Chiudi</button></div>`);
-};
-
 
 let billSort={key:"dataEmissione",dir:"desc"};
 let billViewMonth=new Date().getMonth()+1;
@@ -864,7 +803,6 @@ function renderBills(){
   window._applyBillSearch=apply;
   apply();
 }
-window.setBillUtilityFilter=value=>{billUtilityFilter="Luce";if(window._applyBillSearch)window._applyBillSearch();};
 
 
 window.openBillSearch=()=>{
@@ -1030,277 +968,23 @@ window.saveBill=async id=>{
   const oldBill=id?state.bills.find(x=>x.id===id):null;
   const periodo=periodMode==='free'?periodoLibero:(validPeriod(periodoInizio,periodoFine)?formatPeriod({periodoInizio,periodoFine}):(oldBill?.periodo||""));
   const mese=periodMode==='free'?Number(oldBill?.mese||0):(validPeriod(periodoInizio,periodoFine)?Number(normalizeMonthKey(periodoInizio).slice(5,7)):Number(oldBill?.mese||new Date().getMonth()+1));
-  const data={utenza:"Luce",dataEmissione:v("#fEmissione"),periodo,periodoInizio,periodoFine,scadenza:v("#fScadenza"),dataPagamento:v("#fPagamento"),importo,stato:v("#fStato"),mese,anno:competenze[0]?.anno||selectedYear,competenze:competenze.map(c=>({anno:Number(c.anno),importo:Number(c.importo)})),competenzeFonte:fonte,consumo:v("#fConsumo"),unita:v("#fUnita"),metodo:v("#fMetodo"),note:v("#fNote"),updatedAt:serverTimestamp()};
-  if(id)await updateDoc(docFor("bills",id),data);else await addDoc(pathFor("bills"),{...data,createdAt:serverTimestamp()});
-  closeModal();
+  const status=v("#fStato");
+  const paidDate=status==="Pagata"?v("#fPagamento"):"";
+  const data={utenza:"Luce",dataEmissione:v("#fEmissione"),periodo,periodoInizio,periodoFine,scadenza:v("#fScadenza"),dataPagamento:paidDate,importo,stato:status,mese,anno:competenze[0]?.anno||selectedYear,competenze:competenze.map(c=>({anno:Number(c.anno),importo:Number(c.importo)})),competenzeFonte:fonte,consumo:v("#fConsumo"),unita:v("#fUnita"),metodo:v("#fMetodo"),note:v("#fNote"),updatedAt:serverTimestamp()};
+  try{
+    syncEl.textContent="Salvataggio bolletta…";
+    if(id)await updateDoc(docFor("bills",id),data);
+    else await addDoc(pathFor("bills"),{...data,createdAt:serverTimestamp()});
+    closeModal();
+    updateSyncStatus();
+  }catch(error){
+    console.error("Errore salvataggio bolletta",error);
+    syncEl.textContent="Salvataggio non riuscito";
+    alert("Bolletta non salvata. Verifica la connessione e le autorizzazioni Firebase.");
+  }
 };
 window.dupBill=async id=>{const b=state.bills.find(x=>x.id===id);if(!b)return;const c={...b};delete c.id;await addDoc(pathFor("bills"),{...c,note:(c.note?c.note+" • ":"")+"Duplicata",createdAt:serverTimestamp(),updatedAt:serverTimestamp()})};
 window.delBill=async id=>{if(confirm("Eliminare questa bolletta?"))await deleteDoc(docFor("bills",id))};
-
-function renderBudget(){
-  const rows=months.map((m,i)=>{
-    const b=state.budgets.find(x=>Number(x.mese)===i+1&&Number(x.anno)===selectedYear)||{};
-    return `<tr><td><b>${m}</b></td>${utilities.map(u=>`<td class="right">${money(b[u]||0)}</td>`).join("")}<td class="right"><b>${money(utilities.reduce((a,u)=>a+Number(b[u]||0),0))}</b></td><td><div class="actions"><button class="mini" onclick="window.editBudget('${b.id||""}',${i+1})" aria-label="Modifica budget ${m}">✎</button>${b.id?`<button class="mini danger" onclick="window.delBudget('${b.id}')" aria-label="Elimina budget ${m}">×</button>`:""}</div></td></tr>`
-  }).join("");
-  pageEl.innerHTML=`<div class="card section"><div class="section-head"><div><h2>Budget ${selectedYear}</h2><p class="muted">Tocca la matita per modificare il budget di un mese.</p></div></div><div class="table-wrap generic-edit-table"><table><thead><tr><th>Mese</th>${utilities.map(u=>`<th>${u}</th>`).join("")}<th>Totale</th><th></th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
-}
-
-window.editBudget=(id,mese)=>{
-  const b=id?state.budgets.find(x=>x.id===id):{anno:selectedYear,mese:Number(mese)||1};
-  if(!b)return;
-  showModal(`<div class="modal-head"><h2>Budget ${months[Number(b.mese||1)-1]} ${Number(b.anno||selectedYear)}</h2><button class="mini" onclick="window.closeModal()">×</button></div>
-  <div class="formgrid">
-    <label class="field">Anno<input id="bgAnno" type="number" min="2000" max="2100" value="${Number(b.anno||selectedYear)}"></label>
-    <label class="field">Mese<select id="bgMese">${months.map((m,i)=>`<option value="${i+1}" ${Number(b.mese)===i+1?"selected":""}>${m}</option>`).join("")}</select></label>
-    <div class="span3 budget-edit-grid">${utilities.map(u=>`<label class="field">${utilIcon(u)} ${u}<input class="budget-util" data-util="${u}" type="number" min="0" step=".01" value="${Number(b[u]||0)}"></label>`).join("")}</div>
-  </div>
-  <div class="modal-foot"><button class="ghost" onclick="window.closeModal()">Annulla</button><button class="primary" onclick="window.saveBudget('${id||""}')">Salva</button></div>`);
-};
-window.saveBudget=async id=>{
-  const anno=Number(document.querySelector('#bgAnno')?.value),mese=Number(document.querySelector('#bgMese')?.value);
-  if(!Number.isInteger(anno)||anno<2000||anno>2100||!Number.isInteger(mese)||mese<1||mese>12){alert('Controlla anno e mese.');return}
-  const data={anno,mese,updatedAt:serverTimestamp()};
-  document.querySelectorAll('.budget-util').forEach(el=>data[el.dataset.util]=Number(el.value||0));
-  if(Object.values(data).some((v,k)=>false))return;
-  const duplicate=state.budgets.find(x=>x.id!==id&&Number(x.anno)===anno&&Number(x.mese)===mese);
-  if(duplicate&&!confirm(`Esiste già un budget per ${months[mese-1]} ${anno}. Vuoi sostituirlo?`))return;
-  if(duplicate){await updateDoc(docFor('budgets',duplicate.id),data);if(id)await deleteDoc(docFor('budgets',id));}
-  else if(id)await updateDoc(docFor('budgets',id),data);
-  else await addDoc(pathFor('budgets'),{...data,createdAt:serverTimestamp()});
-  closeModal();
-};
-window.delBudget=async id=>{if(confirm('Eliminare questo budget mensile?'))await deleteDoc(docFor('budgets',id))};
-
-function readingPeriodLabel(r){
-  const dal=r.periodoDal||r.dal||'';
-  const al=r.periodoAl||r.al||'';
-  if(dal&&al)return `${fmtReadingDate(dal)} – ${fmtReadingDate(al)}`;
-  if(dal)return `Dal ${fmtReadingDate(dal)}`;
-  if(al)return `Fino al ${fmtReadingDate(al)}`;
-  return '—';
-}
-function readingUnitForUtility(utility){
-  const u=String(utility||'').toLowerCase();
-  if(u==='luce')return 'kWh';
-  if(u==='acqua')return 'm³';
-  if(u==='gas')return 'Smc';
-  return '';
-}
-
-function waterReadingDate(r){
-  return r.periodoAl||r.data||r.periodoDal||r.al||r.dal||'';
-}
-function waterMetrics(r){
-  if(String(r?.utenza||'').toLowerCase()!=='acqua') return {consumo:'',media:'',giorni:''};
-  const current=Number(String(r.lettura??'').replace(',','.'));
-  if(!Number.isFinite(current)) return {consumo:'',media:'',giorni:''};
-  const currentEnd=waterReadingDate(r);
-  const start=r.periodoDal||r.dal||'';
-  const candidates=state.readings.filter(x=>x.id!==r.id&&String(x.utenza||'').toLowerCase()==='acqua'&&x.lettura!==''&&x.lettura!=null)
-    .map(x=>({r:x,key:waterReadingDate(x)})).filter(x=>x.key&&currentEnd&&x.key<currentEnd);
-  let eligible=candidates.filter(x=>!start||x.key<=start);
-  if(!eligible.length) eligible=candidates;
-  eligible.sort((a,b)=>b.key.localeCompare(a.key));
-  const prev=eligible[0]?.r;
-  if(!prev) return {consumo:'',media:'',giorni:''};
-  const previous=Number(String(prev.lettura).replace(',','.'));
-  if(!Number.isFinite(previous)||current<previous) return {consumo:'',media:'',giorni:''};
-  // Il consumo deriva dalla differenza fra le due letture del contatore.
-  const consumption=current-previous;
-
-  // La media, invece, deve rispettare ESATTAMENTE il periodo Dal/Al inserito
-  // nella registrazione corrente. Solo se il periodo manca usiamo le date
-  // delle letture come ripiego per i vecchi dati.
-  const periodStart=r.periodoDal||r.dal||waterReadingDate(prev);
-  const periodEnd=r.periodoAl||r.al||currentEnd;
-  const d1=new Date(`${periodStart}T12:00:00`), d2=new Date(`${periodEnd}T12:00:00`);
-  const diffDays=Math.round((d2-d1)/86400000);
-  if(!Number.isFinite(diffDays)||diffDays<=0) return {consumo:'',media:'',giorni:'',previous};
-  const days=diffDays;
-  const mediaRaw=consumption/days;
-  const clean=n=>Number(n.toFixed(3)).toString();
-  return {consumo:clean(consumption),media:clean(mediaRaw),mediaRaw,giorni:String(days),previous};
-}
-
-function readingPrimaryValue(r){
-  const u=String(r.utenza||'');
-  const unit=r.unita||readingUnitForUtility(u);
-  if(u==='Acqua'){
-    const value=r.lettura!==undefined&&r.lettura!==''?`${esc(r.lettura)} ${esc(unit)}`:'—';
-    return {label:'Lettura',value};
-  }
-  const value=r.consumo!==undefined&&r.consumo!==''?`${esc(r.consumo)} ${esc(unit)}`:'—';
-  return {label:'Consumo',value};
-}
-function renderReadings(){
-  const allReadings=[...state.readings].filter(r=>readingUtilities.some(u=>u.toLowerCase()===String(r.utenza||'').toLowerCase()));
-  const arr=allReadings.filter(r=>readingsUtilityFilter==='Tutte'||String(r.utenza||'').toLowerCase()===readingsUtilityFilter.toLowerCase()).sort((a,b)=>(b.data||b.periodoAl||'').localeCompare(a.data||a.periodoAl||''));
-  const filterButtons=['Tutte','Acqua','Luce','Gas'].map(u=>`<button class="reading-filter-chip ${readingsUtilityFilter===u?'active':''}" onclick="window.setReadingsFilter('${u}')">${u==='Tutte'?'Tutte':`${utilIcon(u)} ${u}`}</button>`).join('');
-  const desktopRows=arr.map(r=>{const unit=r.unita||readingUnitForUtility(r.utenza);const wm=String(r.utenza||'').toLowerCase()==='acqua'?waterMetrics(r):null;const consumo=wm?wm.consumo:r.consumo;const media=wm?wm.media:r.media;const giorni=wm?wm.giorni:r.giorni;return `<tr><td>${fmtReadingDate(r.data)}</td><td>${readingPeriodLabel(r)}</td><td>${utilIcon(r.utenza)} ${esc(r.utenza)}</td><td>${esc(r.lettura)}${r.lettura!==undefined&&r.lettura!==''&&unit?` ${esc(unit)}`:''}</td><td>${esc(consumo)}${consumo!==undefined&&consumo!==''&&unit?` ${esc(unit)}`:''}</td><td>${esc(giorni)}</td><td>${esc(media)}${media!==undefined&&media!==''&&unit?` ${esc(unit)}/g`:''}</td><td>${esc(r.note)}</td><td><div class="actions"><button class="mini" onclick="window.editReading('${r.id}')">✎</button><button class="mini danger" onclick="window.delReading('${r.id}')">×</button></div></td></tr>`}).join("");
-  const mobileCards=arr.map(r=>{
-    const metric=readingPrimaryValue(r);
-    const isWater=String(r.utenza||'').toLowerCase()==='acqua';
-    const wm=isWater?waterMetrics(r):null;
-    const consumo=isWater&&wm?.consumo!==''?`<span><small>Consumo</small><b>${esc(wm.consumo)} m³</b></span>`:'';
-    const media=isWater&&wm?.media!==''?`<span><small>Media</small><b>${esc(wm.media)} m³/g</b></span>`:'';
-    const notes=r.note?`<p class="reading-mobile-note">${esc(r.note)}</p>`:'';
-    return `<article class="reading-mobile-card">
-      <div class="reading-mobile-top"><span class="reading-mobile-icon ${utilityTone(r.utenza)}">${utilIcon(r.utenza)}</span><div><b>${esc(r.utenza)}</b><small>${fmtReadingDate(r.data)}</small></div><div class="reading-mobile-actions"><button class="mini" aria-label="Modifica" onclick="window.editReading('${r.id}')">✎</button><button class="mini danger" aria-label="Elimina" onclick="window.delReading('${r.id}')">×</button></div></div>
-      <div class="reading-mobile-period"><small>Periodo</small><b>${readingPeriodLabel(r)}</b></div>
-      <div class="reading-mobile-values"><span><small>${metric.label}</small><b>${metric.value}</b></span>${consumo}${media}</div>${notes}
-    </article>`;
-  }).join('');
-  pageEl.innerHTML=`<div class="card section readings-section"><div class="section-head readings-head"><div><h2>Letture contatori</h2><p class="muted">Luce e gas: consumo del periodo. Acqua: lettura del contatore. Giorni e media vengono calcolati automaticamente.</p></div><button class="primary" onclick="window.editReading()">+ Nuova lettura</button></div>
-    <div class="reading-filter-bar">${filterButtons}</div>
-    ${arr.length?`<div class="readings-mobile-list">${mobileCards}</div><div class="table-wrap generic-edit-table readings-desktop-table"><table><thead><tr><th>Data</th><th>Periodo</th><th>Utenza</th><th>Lettura</th><th>Consumo</th><th>Giorni</th><th>Media</th><th>Note</th><th></th></tr></thead><tbody>${desktopRows}</tbody></table></div>`:`<div class="readings-empty">Nessuna lettura ${readingsUtilityFilter==='Tutte'?'registrata.':`di ${esc(readingsUtilityFilter)} registrata.`}</div>`}
-  </div>`;
-}
-window.setReadingsFilter=filter=>{
-  readingsUtilityFilter=['Tutte','Acqua','Luce','Gas'].includes(filter)?filter:'Tutte';
-  renderReadings();
-};
-window.renderReadingDynamicFields=()=>{
-  const utility=document.querySelector('#rdUtenza')?.value||'';
-  const box=document.querySelector('#rdDynamicFields');
-  if(!box)return;
-  const editingId=document.querySelector('#rdEditingId')?.value||'';
-  const original=editingId?state.readings.find(x=>x.id===editingId):null;
-  if(!utility){
-    box.innerHTML='<div class="reading-select-hint">Seleziona prima l’utenza.</div>';
-    return;
-  }
-  if(utility==='Acqua'){
-    box.innerHTML=`<label class="field span2">Lettura (m³)<input id="rdLettura" type="number" inputmode="decimal" step="any" value="${esc(original?.utenza==='Acqua'?(original?.lettura??''):'')}"></label>`;
-  }else{
-    const unit=utility==='Gas'?'Smc':'kWh';
-    box.innerHTML=`<label class="field span2">Consumo (${unit})<input id="rdConsumo" type="number" inputmode="decimal" step="any" value="${esc(original?.utenza===utility?(original?.consumo??''):'')}"></label>`;
-  }
-};
-window.updateReadingFields=window.renderReadingDynamicFields;
-window.updateReadingUnit=window.renderReadingDynamicFields;
-window.editReading=id=>{
-  const today=new Date().toISOString().slice(0,10);
-  const r=id?state.readings.find(x=>x.id===id):{utenza:'',data:today};
-  if(!r)return;
-  const opt=`<option value="">Seleziona utenza</option>`+readingUtilities.map(u=>`<option value="${u}" ${u===r.utenza?'selected':''}>${u}</option>`).join('');
-  showModal(`<div class="modal-head"><h2>${id?'Modifica':'Nuova'} lettura</h2><button class="mini" onclick="window.closeModal()">×</button></div><div class="formgrid">
-    <input id="rdEditingId" type="hidden" value="${esc(id||'')}">
-    <label class="field">Data<input id="rdData" type="date" value="${r.data||''}"></label>
-    <label class="field">Utenza<select id="rdUtenza" onchange="window.renderReadingDynamicFields()">${opt}</select></label>
-    <label class="field">Periodo dal<input id="rdPeriodoDal" type="date" value="${r.periodoDal||r.dal||''}"></label>
-    <label class="field">Periodo al<input id="rdPeriodoAl" type="date" value="${r.periodoAl||r.al||''}"></label>
-    <div id="rdDynamicFields" class="span2 reading-dynamic-fields"></div>
-    <label class="field span2">Note<textarea id="rdNote">${esc(r.note||'')}</textarea></label>
-  </div><div class="modal-foot"><button class="ghost" onclick="window.closeModal()">Annulla</button><button class="primary" onclick="window.saveReading('${id||''}')">Salva</button></div>`);
-  window.renderReadingDynamicFields();
-};
-window.saveReading=async id=>{
-  const v=x=>document.querySelector(x)?.value||'';
-  const periodoDal=v('#rdPeriodoDal'), periodoAl=v('#rdPeriodoAl');
-  let giorni='';
-  if(periodoDal&&periodoAl){
-    const d1=new Date(`${periodoDal}T12:00:00`),d2=new Date(`${periodoAl}T12:00:00`);
-    if(d2<d1){alert('La fine del periodo non può essere precedente all’inizio.');return}
-    giorni=String(Math.round((d2-d1)/86400000)+1);
-  }
-  const utenza=v('#rdUtenza');
-  if(!utenza){alert('Seleziona l’utenza.');return}
-  const isWater=utenza==='Acqua';
-  const unita=readingUnitForUtility(utenza);
-  const lettura=isWater?v('#rdLettura'):'';
-  let media='', waterConsumption='', waterDays=giorni;
-  if(isWater&&lettura){
-    const wm=waterMetrics({id,utenza:'Acqua',lettura,periodoDal,periodoAl,data:v('#rdData')});
-    media=wm.media; waterConsumption=wm.consumo; waterDays=wm.giorni||giorni;
-  }
-  const data={
-    data:v('#rdData'),utenza,unita,periodoDal,periodoAl,
-    lettura,
-    consumo:isWater?waterConsumption:v('#rdConsumo'),
-    giorni:isWater?waterDays:giorni,
-    media,
-    note:v('#rdNote'),updatedAt:serverTimestamp()
-  };
-  if(!data.data){alert('Inserisci la data.');return}
-  if(!data.periodoDal||!data.periodoAl){alert('Inserisci il periodo, dal e al.');return}
-  if(isWater&&!data.lettura){alert('Inserisci la lettura dell’acqua in m³.');return}
-  if(!isWater&&!data.consumo){alert(`Inserisci il consumo ${utenza==='Luce'?'in kWh':'in Smc'}.`);return}
-  if(id)await updateDoc(docFor('readings',id),data);else await addDoc(pathFor('readings'),{...data,createdAt:serverTimestamp()});
-  closeModal();
-};
-window.delReading=async id=>{if(confirm('Eliminare questa lettura?'))await deleteDoc(docFor('readings',id))};
-
-function renderShopping(){
-  const open=[...state.shopping].filter(x=>!x.done).sort((a,b)=>String(a.createdAt?.seconds||0).localeCompare(String(b.createdAt?.seconds||0)));
-  const done=[...state.shopping].filter(x=>x.done);
-  const row=x=>`<div class="shopping-row ${x.done?'done':''}"><button class="shopping-check" onclick="window.toggleShopping('${x.id}',${!x.done})">${x.done?'✓':''}</button><button class="shopping-main" onclick="window.editShopping('${x.id}')"><b>${esc(x.name)}</b><small>${x.qty&&x.qty!=='1'?`Quantità: ${esc(x.qty)}`:'Da comprare'}</small></button><button class="shopping-delete" onclick="window.delShopping('${x.id}')">×</button></div>`;
-  pageEl.innerHTML=`<section class="shopping-head card"><div><p>${open.length} ${open.length===1?'prodotto da comprare':'prodotti da comprare'}</p></div><button class="primary" onclick="window.editShopping()">+ Aggiungi</button></section>
-  <section class="card shopping-list">${open.length?open.map(row).join(''):'<div class="shopping-empty"><span class="shopping-empty-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h2l1.5 9h9.8l1.7-6.5H7"></path><circle cx="9" cy="18.5" r="1.25"></circle><circle cx="16.5" cy="18.5" r="1.25"></circle></svg></span><b>La lista è vuota</b><span>Aggiungi il primo prodotto.</span></div>'}</section>
-  ${done.length?`<section class="shopping-bought"><div class="clean-head"><h2>Acquistati</h2><button onclick="window.clearBought()">Elimina acquistati</button></div><div class="card shopping-list">${done.map(row).join('')}</div></section>`:''}
-  <section class="card alexa-card"><div class="alexa-orb">◉</div><div><b>Alexa</b><p>La lista è già predisposta per essere collegata alla skill Casa+. Il collegamento vocale verrà attivato nella fase Alexa.</p></div><span class="alexa-status">Da collegare</span></section>`;
-}
-window.editShopping=id=>{
-  const x=id?state.shopping.find(v=>v.id===id):{qty:'1'};if(!x)return;
-  showModal(`<div class="modal-head"><h2>${id?'Modifica prodotto':'Aggiungi alla spesa'}</h2><button class="mini" onclick="window.closeModal()">×</button></div><div class="formgrid"><label class="field span2">Prodotto<input id="shName" value="${esc(x.name||'')}" placeholder="Prodotto"></label><label class="field">Quantità<input id="shQty" value="${esc(x.qty||'1')}" placeholder="1"></label></div><div class="modal-foot"><button class="ghost" onclick="window.closeModal()">Annulla</button><button class="primary" onclick="window.saveShopping('${id||''}')">Salva</button></div>`);
-  setTimeout(()=>document.querySelector('#shName')?.focus(),50);
-};
-window.saveShopping=async id=>{const name=document.querySelector('#shName')?.value.trim()||'';if(!name){alert('Inserisci il prodotto.');return}const data={name,qty:document.querySelector('#shQty')?.value.trim()||'1',updatedAt:serverTimestamp()};if(id)await updateDoc(docFor('shopping',id),data);else await addDoc(pathFor('shopping'),{...data,done:false,source:'app',createdAt:serverTimestamp()});closeModal()};
-window.toggleShopping=async(id,done)=>updateDoc(docFor('shopping',id),{done,completedAt:done?serverTimestamp():null,updatedAt:serverTimestamp()});
-window.delShopping=async id=>{if(confirm('Eliminare questo prodotto dalla lista?'))await deleteDoc(docFor('shopping',id))};
-window.clearBought=async()=>{if(!confirm('Eliminare tutti i prodotti acquistati?'))return;await Promise.all(state.shopping.filter(x=>x.done).map(x=>deleteDoc(docFor('shopping',x.id))))};
-
-const jobRooms=['Cucina','Soggiorno','Entrata','Stanza amore','Stanza mia','Bagno mio','Bagno amore','Camera da letto','Balcone monte','Balcone mare'];
-const jobStatuses=['Da fare','In corso','Fatto'];
-function renderJobs(){
-  const todo=state.jobs.filter(j=>j.stato!=="Fatto"),done=state.jobs.filter(j=>j.stato==="Fatto");
-  pageEl.innerHTML=`<div class="kpis" style="grid-template-columns:repeat(3,1fr)">
-  <div class="card kpi"><div class="lab">DA FARE</div><div class="val">${todo.length}</div></div>
-  <div class="card kpi"><div class="lab">COMPLETATI</div><div class="val">${done.length}</div></div>
-  <div class="card kpi"><div class="lab">COSTO STIMATO</div><div class="val">${money(sum(todo,"costo"))}</div></div></div>
-  <div class="card section"><div class="section-head"><div><h2>Lavori casa</h2><p class="muted">Attività, materiali, costi e stato.</p></div><button class="primary" onclick="window.editJob()">+ Nuovo lavoro</button></div><div class="table-wrap generic-edit-table"><table><thead><tr><th>Attività</th><th>Stanza</th><th>Materiali</th><th>Costo</th><th>Stato</th><th></th></tr></thead><tbody>${state.jobs.map(j=>`<tr><td>${esc(j.attivita)}</td><td>${esc(j.stanza)}</td><td>${esc(j.materiali)}</td><td>${j.costo==null||j.costo===''?"—":money(j.costo)}</td><td>${badge(j.stato)}</td><td><div class="actions"><button class="mini" onclick="window.editJob('${j.id}')">✎</button><button class="mini danger" onclick="window.delJob('${j.id}')">×</button></div></td></tr>`).join("")}</tbody></table></div></div>`;
-}
-window.editJob=id=>{
-  const j=id?state.jobs.find(x=>x.id===id):{stato:'Da fare'};if(!j)return;
-  const statuses=[...new Set([...jobStatuses,j.stato].filter(Boolean))].map(x=>`<option ${x===j.stato?'selected':''}>${esc(x)}</option>`).join('');
-  showModal(`<div class="modal-head"><h2>${id?'Modifica':'Nuovo'} lavoro</h2><button class="mini" onclick="window.closeModal()">×</button></div><div class="formgrid">
-    <label class="field span2">Attività<input id="jbAttivita" value="${esc(j.attivita||'')}"></label>
-    <label class="field">Stanza<input id="jbStanza" list="jobRoomList" value="${esc(j.stanza||'')}"><datalist id="jobRoomList">${jobRooms.map(x=>`<option value="${x}">`).join('')}</datalist></label>
-    <label class="field span2">Materiali<input id="jbMateriali" value="${esc(j.materiali||'')}"></label>
-    <label class="field">Costo stimato €<input id="jbCosto" type="number" min="0" step=".01" value="${j.costo??''}"></label>
-    <label class="field">Stato<select id="jbStato">${statuses}</select></label>
-    <label class="field span2">Note<textarea id="jbNote">${esc(j.note||'')}</textarea></label>
-  </div><div class="modal-foot"><button class="ghost" onclick="window.closeModal()">Annulla</button><button class="primary" onclick="window.saveJob('${id||''}')">Salva</button></div>`);
-};
-window.saveJob=async id=>{
-  const v=x=>document.querySelector(x)?.value||'';const raw=v('#jbCosto');
-  const data={attivita:v('#jbAttivita').trim(),stanza:v('#jbStanza').trim(),materiali:v('#jbMateriali').trim(),costo:raw===''?'':Number(raw),stato:v('#jbStato'),note:v('#jbNote'),updatedAt:serverTimestamp()};
-  if(!data.attivita){alert("Inserisci l'attività da fare.");return}if(raw!==''&&!Number.isFinite(data.costo)){alert('Controlla il costo.');return}
-  if(id)await updateDoc(docFor('jobs',id),data);else await addDoc(pathFor('jobs'),{...data,createdAt:serverTimestamp()});closeModal();
-};
-window.delJob=async id=>{if(confirm('Eliminare questo lavoro?'))await deleteDoc(docFor('jobs',id))};
-
-function renderTariffs(){
-  pageEl.innerHTML=`<div class="card section"><div class="section-head"><div><h2>Tariffe e contratti</h2><p class="muted">Fornitori e condizioni delle utenze.</p></div><button class="primary" onclick="window.editTariff()">+ Nuova tariffa</button></div><div class="table-wrap generic-edit-table"><table><thead><tr><th>Utenza</th><th>Fornitore</th><th>Quota fissa</th><th>Costo unitario</th><th>Unità</th><th>Note</th><th></th></tr></thead><tbody>${state.tariffs.map(t=>`<tr><td>${utilIcon(t.utenza)} ${esc(t.utenza)}</td><td>${esc(t.fornitore)}</td><td>${money(t.quotaFissa)}</td><td>${Number(t.costoUnitario||0).toLocaleString("it-IT")}</td><td>${esc(t.unita)}</td><td>${esc(t.note)}</td><td><div class="actions"><button class="mini" onclick="window.editTariff('${t.id}')">✎</button><button class="mini danger" onclick="window.delTariff('${t.id}')">×</button></div></td></tr>`).join("")}</tbody></table></div></div>`;
-}
-window.editTariff=id=>{
-  const t=id?state.tariffs.find(x=>x.id===id):{utenza:'Luce'};if(!t)return;
-  const opt=utilities.map(u=>`<option ${u===t.utenza?'selected':''}>${u}</option>`).join('');
-  showModal(`<div class="modal-head"><h2>${id?'Modifica':'Nuova'} tariffa</h2><button class="mini" onclick="window.closeModal()">×</button></div><div class="formgrid">
-    <label class="field">Utenza<select id="tfUtenza">${opt}</select></label>
-    <label class="field span2">Fornitore<input id="tfFornitore" value="${esc(t.fornitore||'')}"></label>
-    <label class="field">Quota fissa €<input id="tfQuota" type="number" min="0" step=".0001" value="${t.quotaFissa??''}"></label>
-    <label class="field">Costo unitario<input id="tfCosto" type="number" min="0" step=".000001" value="${t.costoUnitario??''}"></label>
-    <label class="field">Unità<input id="tfUnita" value="${esc(t.unita||'')}"></label>
-    <label class="field span3">Note<textarea id="tfNote">${esc(t.note||'')}</textarea></label>
-  </div><div class="modal-foot"><button class="ghost" onclick="window.closeModal()">Annulla</button><button class="primary" onclick="window.saveTariff('${id||''}')">Salva</button></div>`);
-};
-window.saveTariff=async id=>{
-  const v=x=>document.querySelector(x)?.value||'';const q=v('#tfQuota'),c=v('#tfCosto');
-  const data={utenza:v('#tfUtenza'),fornitore:v('#tfFornitore').trim(),quotaFissa:q===''?0:Number(q),costoUnitario:c===''?0:Number(c),unita:v('#tfUnita').trim(),note:v('#tfNote'),updatedAt:serverTimestamp()};
-  if((q!==''&&!Number.isFinite(data.quotaFissa))||(c!==''&&!Number.isFinite(data.costoUnitario))){alert('Controlla i valori della tariffa.');return}
-  if(id)await updateDoc(docFor('tariffs',id),data);else await addDoc(pathFor('tariffs'),{...data,createdAt:serverTimestamp()});closeModal();
-};
-window.delTariff=async id=>{if(confirm('Eliminare questa tariffa?'))await deleteDoc(docFor('tariffs',id))};
 
 async function exportBackup(){
   const backup={exportedAt:new Date().toISOString()};
@@ -1311,224 +995,6 @@ async function exportBackup(){
 }
 window.exportBackup=exportBackup;
 
-
-let agendaWeekStart="";
-let agendaView="month";
-let agendaMonthAnchor="";
-let agendaSelectedDate="";
-function isoLocal(d){const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,"0"),day=String(d.getDate()).padStart(2,"0");return `${y}-${m}-${day}`}
-function dateFromIso(s){const [y,m,d]=String(s||"").split("-").map(Number);return new Date(y,m-1,d)}
-function mondayOf(d){const x=new Date(d.getFullYear(),d.getMonth(),d.getDate());const wd=x.getDay()||7;x.setDate(x.getDate()-wd+1);return x}
-function agendaStart(){if(agendaWeekStart)return dateFromIso(agendaWeekStart);return mondayOf(new Date())}
-function eventCategoryIcon(c){return ({Auto:"🚗",Casa:"⌂",Personale:"●",Salute:"+",Appuntamento:"□",Altro:"•",Turno:"▣"})[c]||"•"}
-function agendaItemsForDate(date){
-  const manual=state.events.filter(e=>e.date===date).map(e=>({kind:e.type==='shift'?'shift':'event',...e}));
-  const bills=state.bills.filter(b=>!isPaid(b)&&b.scadenza===date).map(b=>({kind:"bill",id:b.id,title:`${b.utenza} · ${money(b.importo)}`,time:"",category:"Bolletta",note:"Scadenza bolletta"}));
-  const order={shift:0,event:1,bill:2};
-  return [...manual,...bills].sort((a,b)=>(order[a.kind]??9)-(order[b.kind]??9)||String(a.time||"99:99").localeCompare(String(b.time||"99:99")));
-}
-function agendaItemHtml(x){
-  if(x.kind==='bill')return `<button class="agenda-item bill-event" onclick="window.editBill('${x.id}')"><span class="agenda-time agenda-bill-badge">B</span><span><b>${esc(x.title)}</b><small>Bolletta da pagare</small></span><i>›</i></button>`;
-  if(x.kind==='shift')return `<button class="agenda-item shift-event shift-${String(x.shift||'').toLowerCase().replace(/[^a-z]/g,'')}" onclick="window.editWorkShift('${x.id}')"><span class="agenda-time">Turno</span><span><b>${esc(x.shift||'Turno')}</b><small>Turno di lavoro${x.note?` · ${esc(x.note)}`:''}</small></span><i>›</i></button>`;
-  return `<button class="agenda-item" onclick="window.editEvent('${x.id}')"><span class="agenda-time">${esc(x.time||'Tutto il giorno')}</span><span><b><i class="event-list-dot"></i>${esc(x.title)}</b><small>${esc(x.category||'Impegno')}${x.note?` · ${esc(x.note)}`:''}</small></span><i>›</i></button>`;
-}
-function monthAgendaMarkers(items){
-  const shift=items.find(x=>x.kind==='shift');
-  const bills=items.filter(x=>x.kind==='bill');
-  const events=items.filter(x=>x.kind==='event');
-  return `${shift?`<span class="month-shift shift-${String(shift.shift||'').toLowerCase().replace(/[^a-z]/g,'')}">${esc(shift.shift||'Turno')}</span>`:''}<span class="month-markers">${bills.length?'<i class="bill-badge">B</i>':''}${events.length?'<i class="event-dot"></i>':''}</span>`;
-}
-function agendaViewToggle(){return `<div class="agenda-view-toggle"><button class="${agendaView==='week'?'active':''}" onclick="window.setAgendaView('week')">Settimana</button><button class="${agendaView==='month'?'active':''}" onclick="window.setAgendaView('month')">Mese</button></div>`}
-function renderAgenda(){
-  const today=isoLocal(new Date());
-  if(agendaView==='month'){
-    let anchor=agendaMonthAnchor?dateFromIso(agendaMonthAnchor):new Date();
-    anchor=new Date(anchor.getFullYear(),anchor.getMonth(),1);agendaMonthAnchor=isoLocal(anchor);
-    if(!agendaSelectedDate||dateFromIso(agendaSelectedDate).getMonth()!==anchor.getMonth()||dateFromIso(agendaSelectedDate).getFullYear()!==anchor.getFullYear()){
-      agendaSelectedDate=(today.slice(0,7)===agendaMonthAnchor.slice(0,7))?today:isoLocal(anchor);
-    }
-    const firstGrid=mondayOf(anchor);const cells=[];for(let i=0;i<42;i++){const d=new Date(firstGrid);d.setDate(firstGrid.getDate()+i);cells.push(d)}
-    const selectedItems=agendaItemsForDate(agendaSelectedDate);
-    pageEl.innerHTML=`<section class="agenda-head"><div><h1>Agenda</h1><p>Appuntamenti e scadenze.</p></div><div class="agenda-head-actions"><button class="ghost agenda-turn-btn" onclick="window.editWorkShift()">+ Turno</button><button class="primary" onclick="window.editEvent()">+ Impegno</button></div></section>
-      ${agendaViewToggle()}
-      <section class="agenda-weekbar agenda-monthbar"><button onclick="window.changeAgendaMonth(-1)">‹</button><div><b>${monthNamesLong[anchor.getMonth()]} ${anchor.getFullYear()}</b><small>Vista mensile</small></div><button onclick="window.changeAgendaMonth(1)">›</button></section>
-      <section class="month-calendar card"><div class="month-weekdays">${['LUN','MAR','MER','GIO','VEN','SAB','DOM'].map(x=>`<span>${x}</span>`).join('')}</div><div class="month-grid">${cells.map(d=>{const key=isoLocal(d),items=agendaItemsForDate(key),outside=d.getMonth()!==anchor.getMonth();return `<button class="month-day ${outside?'outside':''} ${key===today?'today':''} ${key===agendaSelectedDate?'selected':''}" onclick="window.selectAgendaDate('${key}')"><b>${d.getDate()}</b>${monthAgendaMarkers(items)}</button>`}).join('')}</div></section>
-      <section class="agenda-selected card"><div class="clean-head"><h2>${fmtDate(agendaSelectedDate)}</h2><span>${selectedItems.length} ${selectedItems.length===1?'impegno':'impegni'}</span></div><div class="agenda-items">${selectedItems.length?selectedItems.map(agendaItemHtml).join(''):'<div class="agenda-empty">Nessun impegno in questa data.</div>'}</div></section>`;
-    return;
-  }
-  const start=agendaStart();agendaWeekStart=isoLocal(start);const end=new Date(start);end.setDate(start.getDate()+6);
-  const days=[];for(let i=0;i<7;i++){const d=new Date(start);d.setDate(start.getDate()+i);days.push(d)}
-  pageEl.innerHTML=`<section class="agenda-head"><div><h1>Agenda</h1><p>Appuntamenti e scadenze della settimana.</p></div><div class="agenda-head-actions"><button class="ghost agenda-turn-btn" onclick="window.editWorkShift()">+ Turno</button><button class="primary" onclick="window.editEvent()">+ Impegno</button></div></section>
-  ${agendaViewToggle()}
-  <section class="agenda-weekbar"><button onclick="window.changeAgendaWeek(-1)">‹</button><div><b>${fmtDate(isoLocal(start))} – ${fmtDate(isoLocal(end))}</b><small>Settimana</small></div><button onclick="window.changeAgendaWeek(1)">›</button></section>
-  <div class="agenda-days">${days.map(d=>{const key=isoLocal(d),items=agendaItemsForDate(key);return `<section class="agenda-day ${key===today?'today':''}"><div class="agenda-date"><span>${['DOM','LUN','MAR','MER','GIO','VEN','SAB'][d.getDay()]}</span><b>${d.getDate()}</b><small>${monthNamesLong[d.getMonth()]}</small></div><div class="agenda-items">${items.length?items.map(agendaItemHtml).join(''):`<div class="agenda-empty">Nessun impegno</div>`}</div></section>`}).join('')}</div>`;
-}
-window.setAgendaView=v=>{agendaView=v==='month'?'month':'week';renderAgenda()};
-window.changeAgendaWeek=delta=>{const d=agendaStart();d.setDate(d.getDate()+Number(delta)*7);agendaWeekStart=isoLocal(d);renderAgenda()};
-window.changeAgendaMonth=delta=>{let d=agendaMonthAnchor?dateFromIso(agendaMonthAnchor):new Date();d=new Date(d.getFullYear(),d.getMonth()+Number(delta),1);agendaMonthAnchor=isoLocal(d);agendaSelectedDate=isoLocal(d);renderAgenda()};
-window.selectAgendaDate=date=>{agendaSelectedDate=date;renderAgenda()};
-window.editEvent=id=>{
-  const e=id?state.events.find(x=>x.id===id):{title:"",date:agendaSelectedDate||isoLocal(new Date()),time:"",category:"Appuntamento",note:""};if(!e)return;
-  const cats=["Appuntamento","Auto","Casa","Personale","Salute","Altro"];
-  showModal(`<div class="modal-head"><div><div class="modal-kicker">Agenda</div><h2>${id?'Modifica':'Nuovo'} impegno</h2></div><button class="mini" onclick="window.closeModal()">×</button></div><div class="formgrid">
-    <label class="field span2">Titolo<input id="evTitle" value="${esc(e.title||'')}" placeholder="Titolo impegno"></label>
-    <label class="field">Categoria<select id="evCategory">${cats.map(c=>`<option ${c===e.category?'selected':''}>${c}</option>`).join('')}</select></label>
-    <label class="field">Data<input id="evDate" type="date" value="${e.date||isoLocal(new Date())}"></label>
-    <label class="field">Ora <small>(facoltativa)</small><input id="evTime" type="time" value="${e.time||''}"></label>
-    <label class="field span3">Note<textarea id="evNote" placeholder="Note facoltative">${esc(e.note||'')}</textarea></label>
-  </div><div class="modal-foot">${id?`<button class="danger" onclick="window.deleteEvent('${id}')">Elimina</button>`:''}<span class="modal-spacer"></span><button class="ghost" onclick="window.closeModal()">Annulla</button><button class="primary" onclick="window.saveEvent('${id||''}')">Salva</button></div>`);
-};
-window.saveEvent=async id=>{const title=document.querySelector('#evTitle')?.value.trim(),date=document.querySelector('#evDate')?.value;if(!title){alert('Inserisci il titolo dell’impegno.');return}if(!date){alert('Inserisci la data.');return}const data={title,date,time:document.querySelector('#evTime')?.value||'',category:document.querySelector('#evCategory')?.value||'Altro',note:document.querySelector('#evNote')?.value.trim()||'',updatedAt:serverTimestamp()};if(id)await updateDoc(docFor('events',id),data);else await addDoc(pathFor('events'),{...data,createdAt:serverTimestamp()});closeModal();};
-window.deleteEvent=async id=>{if(confirm('Eliminare questo impegno?')){await deleteDoc(docFor('events',id));closeModal();}};
-
-const workShiftTypes=['Mattina','Pomeriggio','Notte','Libero','C.Turno'];
-window.editWorkShift=id=>{
-  const e=id?state.events.find(x=>x.id===id):{date:agendaSelectedDate||isoLocal(new Date()),shift:'Mattina',note:''};if(!e)return;
-  showModal(`<div class="modal-head"><div><div class="modal-kicker">Agenda · lavoro</div><h2>${id?'Modifica':'Nuovo'} turno</h2></div><button class="mini" onclick="window.closeModal()">×</button></div><div class="formgrid">
-    <label class="field span2">Turno<select id="shiftType">${workShiftTypes.map(t=>`<option ${t===e.shift?'selected':''}>${t}</option>`).join('')}</select></label>
-    <label class="field">Data<input id="shiftDate" type="date" value="${e.date||isoLocal(new Date())}"></label>
-    <label class="field span3">Note <small>(facoltative)</small><textarea id="shiftNote" placeholder="Note facoltative">${esc(e.note||'')}</textarea></label>
-  </div><div class="modal-foot">${id?`<button class="danger" onclick="window.deleteEvent('${id}')">Elimina</button>`:''}<span class="modal-spacer"></span><button class="ghost" onclick="window.closeModal()">Annulla</button><button class="primary" onclick="window.saveWorkShift('${id||''}')">Salva turno</button></div>`);
-};
-window.saveWorkShift=async id=>{
-  const date=document.querySelector('#shiftDate')?.value,shift=document.querySelector('#shiftType')?.value||'Mattina';
-  if(!date){alert('Inserisci la data del turno.');return}
-  const existing=state.events.find(e=>e.type==='shift'&&e.date===date&&e.id!==id);
-  if(existing&&!confirm('In questa data è già presente un turno. Vuoi aggiungerne comunque un altro?'))return;
-  const data={type:'shift',shift,title:`Turno ${shift}`,date,time:'',category:'Turno',note:document.querySelector('#shiftNote')?.value.trim()||'',updatedAt:serverTimestamp()};
-  if(id)await updateDoc(docFor('events',id),data);else await addDoc(pathFor('events'),{...data,createdAt:serverTimestamp()});closeModal();
-};
-
-function carMaintenanceStatus(x){return x?.status==='planned'?'planned':'done'}
-function carPlannedMonthLabel(value){
-  if(!/^\d{4}-\d{2}$/.test(String(value||'')))return '';
-  const [y,m]=String(value).split('-').map(Number);
-  return `${months[m-1].toUpperCase()} ${y}`;
-}
-function carMileageRows(){
-  const rows=[...state.carMileage]
-    .filter(x=>normalizeMonthKey(x.month)&&Number.isFinite(Number(x.odometer)))
-    .sort((a,b)=>String(a.month).localeCompare(String(b.month)));
-  return rows.map((x,i)=>{
-    const previous=i>0?rows[i-1]:null;
-    const delta=previous?Number(x.odometer)-Number(previous.odometer):null;
-    return {...x,delta:Number.isFinite(delta)&&delta>=0?delta:null};
-  });
-}
-function renderCarMaintenance(){
-  const all=[...state.carMaintenance];
-  const done=all.filter(x=>carMaintenanceStatus(x)==='done');
-  const planned=all.filter(x=>carMaintenanceStatus(x)==='planned');
-  const doneSorted=[...done].sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
-  const plannedSorted=[...planned].sort((a,b)=>String(a.plannedMonth||a.date||'9999-99').localeCompare(String(b.plannedMonth||b.date||'9999-99')));
-  const arr=[...plannedSorted,...doneSorted];
-  const annualYear=new Date().getFullYear();
-  const annualSpent=done.filter(x=>String(x.date||'').startsWith(`${annualYear}-`)).reduce((s,x)=>s+Number(x.cost||0),0);
-  const mileage=carMileageRows();
-  const mileageDesc=[...mileage].reverse();
-  const latestMileage=mileageDesc[0];
-  const annualKm=mileage.filter(x=>String(x.month||'').startsWith(`${annualYear}-`)&&Number.isFinite(x.delta)).reduce((s,x)=>s+x.delta,0);
-  pageEl.innerHTML=`<section class="car-head"><div><p>Tagliandi, gomme, revisioni e interventi.</p></div><button class="primary" onclick="window.editCarMaintenance()">+ Intervento</button></section>
-    <div class="car-kpis"><div class="card"><small>Interventi eseguiti</small><strong>${done.length}</strong></div><div class="card"><small>Spesa ${annualYear}</small><strong>${money(annualSpent)}</strong></div><button class="card car-kpi-mileage" onclick="window.editCarMileage()"><span><small>Ultimi km</small><strong>${latestMileage?Number(latestMileage.odometer).toLocaleString('it-IT'):'—'}</strong></span><em>+ Inserisci mese</em></button></div>
-    <section class="card car-mileage-card"><div class="car-mileage-head"><div><small>CHILOMETRI</small><h3>Andamento mensile</h3></div><div class="car-mileage-year"><span>Km ${annualYear}</span><strong>${annualKm.toLocaleString('it-IT')}</strong></div></div>
-      <div class="car-mileage-list">${mileageDesc.length?mileageDesc.map(x=>`<button class="car-mileage-row" onclick="window.editCarMileage('${x.id}')"><span><b>${monthLabel(x.month)}</b><small>Contachilometri ${Number(x.odometer).toLocaleString('it-IT')} km</small></span><span><small>Percorsi</small><strong>${Number.isFinite(x.delta)?x.delta.toLocaleString('it-IT')+' km':'—'}</strong></span><i>›</i></button>`).join(''):'<div class="home-empty">Inserisci la prima rilevazione mensile del contachilometri.</div>'}</div>
-    </section>
-    <section class="card car-list">${arr.length?arr.map(x=>{
-      const isPlanned=carMaintenanceStatus(x)==='planned';
-      const when=isPlanned?(carPlannedMonthLabel(x.plannedMonth)||'Periodo da definire'):fmtDate(x.date);
-      return `<button class="car-row ${isPlanned?'car-row-planned':''}" onclick="window.editCarMaintenance('${x.id}')"><span class="car-icon">${isPlanned?'◷':'🚗'}</span><span><b>${esc(x.type||'Intervento')}${isPlanned?` <mark class="car-status-badge">Da fare</mark>`:''}</b><small>${isPlanned?'Previsto: ':''}${when}${!isPlanned&&x.km?` · ${Number(x.km).toLocaleString('it-IT')} km`:''}${x.workshop?` · ${esc(x.workshop)}`:''}</small>${!isPlanned&&(x.nextDate||x.nextKm)?`<em>Prossimo: ${x.nextDate?fmtDate(x.nextDate):''}${x.nextDate&&x.nextKm?' · ':''}${x.nextKm?Number(x.nextKm).toLocaleString('it-IT')+' km':''}</em>`:''}${isPlanned&&x.note?`<em>${esc(x.note)}</em>`:''}</span><strong>${!isPlanned&&x.cost!==''&&x.cost!=null?money(x.cost):'—'}</strong><i>›</i></button>`;
-    }).join(''):'<div class="home-empty">Nessun intervento registrato.</div>'}</section>`;
-}
-window.editCarMileage=id=>{
-  const current=id?state.carMileage.find(r=>r.id===id):{month:normalizeMonthKey(isoLocal(new Date())),odometer:''};
-  if(!current)return;
-  showModal(`<div class="modal-head"><div><div class="modal-kicker">Auto · chilometri</div><h2>${id?'Modifica':'Nuova'} rilevazione</h2></div><button class="mini" onclick="window.closeModal()">×</button></div><div class="formgrid">
-    <label class="field span2">Mese<input id="carMileageMonth" type="month" value="${esc(current.month||'')}"></label>
-    <label class="field">Contachilometri<input id="carMileageOdometer" type="number" min="0" step="1" inputmode="numeric" value="${current.odometer??''}" placeholder="Es. 85000"></label>
-    <div class="car-mileage-help span3">Inserisci il valore totale indicato dal contachilometri. Casa+ calcola automaticamente i km percorsi rispetto alla rilevazione precedente e il totale annuale.</div>
-  </div><div class="modal-foot">${id?`<button class="danger" onclick="window.deleteCarMileage('${id}')">Elimina</button>`:''}<span class="modal-spacer"></span><button class="ghost" onclick="window.closeModal()">Annulla</button><button class="primary" onclick="window.saveCarMileage('${id||''}')">Salva</button></div>`);
-};
-window.saveCarMileage=async id=>{
-  const month=normalizeMonthKey(document.querySelector('#carMileageMonth')?.value||'');
-  const raw=document.querySelector('#carMileageOdometer')?.value||'';
-  const odometer=Number(raw);
-  if(!month){alert('Seleziona il mese.');return}
-  if(raw===''||!Number.isFinite(odometer)||odometer<0){alert('Inserisci un chilometraggio valido.');return}
-  const duplicate=state.carMileage.find(x=>normalizeMonthKey(x.month)===month&&x.id!==id);
-  if(duplicate){alert('Hai già inserito il chilometraggio per questo mese. Apri la rilevazione esistente per modificarla.');return}
-  const ordered=state.carMileage.filter(x=>x.id!==id&&normalizeMonthKey(x.month)&&Number.isFinite(Number(x.odometer))).sort((a,b)=>String(a.month).localeCompare(String(b.month)));
-  const previous=[...ordered].reverse().find(x=>String(x.month)<month);
-  const next=ordered.find(x=>String(x.month)>month);
-  if(previous&&odometer<Number(previous.odometer)){alert(`Il valore non può essere inferiore alla rilevazione precedente (${Number(previous.odometer).toLocaleString('it-IT')} km).`);return}
-  if(next&&odometer>Number(next.odometer)){alert(`Il valore non può superare la rilevazione successiva (${Number(next.odometer).toLocaleString('it-IT')} km).`);return}
-  const data={month,odometer:Math.round(odometer),updatedAt:serverTimestamp()};
-  if(id)await updateDoc(docFor('carMileage',id),data);else await addDoc(pathFor('carMileage'),{...data,createdAt:serverTimestamp()});
-  closeModal();
-};
-window.deleteCarMileage=async id=>{if(confirm('Eliminare questa rilevazione chilometrica?')){await deleteDoc(docFor('carMileage',id));closeModal();}};
-window.toggleCarMaintenanceFields=()=>{
-  const planned=document.querySelector('#carStatus')?.value==='planned';
-  document.querySelector('#carDoneFields')?.classList.toggle('hidden',planned);
-  document.querySelector('#carPlannedFields')?.classList.toggle('hidden',!planned);
-  document.querySelector('#carFutureFields')?.classList.toggle('hidden',planned);
-};
-window.editCarMaintenance=id=>{
-  const x=id?state.carMaintenance.find(r=>r.id===id):{type:'Tagliando',status:'done',date:isoLocal(new Date()),plannedMonth:'',km:'',cost:'',workshop:'',nextDate:'',nextKm:'',note:''};if(!x)return;
-  const status=carMaintenanceStatus(x);
-  const types=['Tagliando','Cambio olio','Gomme','Freni','Revisione','Batteria','Distribuzione','Manutenzione','Riparazione','Altro'];
-  showModal(`<div class="modal-head"><div><div class="modal-kicker">Auto</div><h2>${id?'Modifica':'Nuovo'} intervento</h2></div><button class="mini" onclick="window.closeModal()">×</button></div><div class="formgrid">
-    <label class="field span2">Intervento<select id="carType">${types.map(t=>`<option ${t===x.type?'selected':''}>${t}</option>`).join('')}</select></label>
-    <label class="field">Stato<select id="carStatus" onchange="window.toggleCarMaintenanceFields()"><option value="done" ${status==='done'?'selected':''}>Eseguito</option><option value="planned" ${status==='planned'?'selected':''}>Da fare</option></select></label>
-    <div id="carDoneFields" class="form-subgrid span3 ${status==='planned'?'hidden':''}">
-      <label class="field">Data<input id="carDate" type="date" value="${x.date||isoLocal(new Date())}"></label>
-      <label class="field">Chilometri<input id="carKm" type="number" min="0" step="1" value="${x.km??''}" placeholder="Es. 85000"></label>
-      <label class="field">Costo €<input id="carCost" type="number" min="0" step="0.01" value="${x.cost??''}"></label>
-    </div>
-    <div id="carPlannedFields" class="form-subgrid span3 ${status==='planned'?'':'hidden'}">
-      <label class="field span2">Mese previsto<input id="carPlannedMonth" type="month" value="${x.plannedMonth||''}"></label>
-      <div class="car-planned-help">Puoi programmare una manutenzione anche senza scegliere un giorno preciso. Quando la esegui, riapri la voce e cambia lo stato in <b>Eseguito</b>.</div>
-    </div>
-    <label class="field span2">Officina / fornitore<input id="carWorkshop" value="${esc(x.workshop||'')}" placeholder="Facoltativo"></label>
-    <div id="carFutureFields" class="form-subgrid span3 ${status==='planned'?'hidden':''}">
-      <label class="field">Prossima data<input id="carNextDate" type="date" value="${x.nextDate||''}"></label>
-      <label class="field">Prossimi km<input id="carNextKm" type="number" min="0" step="1" value="${x.nextKm??''}"></label>
-    </div>
-    <label class="field span3">Note<textarea id="carNote" placeholder="Ricambi, dettagli, promemoria…">${esc(x.note||'')}</textarea></label>
-  </div><div class="modal-foot">${id?`<button class="danger" onclick="window.deleteCarMaintenance('${id}')">Elimina</button>`:''}<span class="modal-spacer"></span><button class="ghost" onclick="window.closeModal()">Annulla</button><button class="primary" onclick="window.saveCarMaintenance('${id||''}')">Salva</button></div>`);
-  window.toggleCarMaintenanceFields();
-};
-window.saveCarMaintenance=async id=>{
-  const v=q=>document.querySelector(q)?.value||'';
-  const status=v('#carStatus')==='planned'?'planned':'done';
-  const km=v('#carKm'),cost=v('#carCost'),nextKm=v('#carNextKm');
-  const data={type:v('#carType'),status,date:status==='done'?v('#carDate'):'',plannedMonth:status==='planned'?v('#carPlannedMonth'):'',km:status==='done'&&km!==''?Number(km):'',cost:status==='done'&&cost!==''?Number(cost):'',workshop:v('#carWorkshop').trim(),nextDate:status==='done'?v('#carNextDate'):'',nextKm:status==='done'&&nextKm!==''?Number(nextKm):'',note:v('#carNote').trim(),updatedAt:serverTimestamp()};
-  if(status==='done'&&!data.date){alert('Inserisci la data dell’intervento.');return}
-  if(status==='planned'&&!data.plannedMonth){alert('Inserisci il mese previsto per la manutenzione.');return}
-  if(status==='done'&&((km!==''&&!Number.isFinite(data.km))||(cost!==''&&!Number.isFinite(data.cost))||(nextKm!==''&&!Number.isFinite(data.nextKm)))){alert('Controlla chilometri e costo.');return}
-  if(id)await updateDoc(docFor('carMaintenance',id),data);else await addDoc(pathFor('carMaintenance'),{...data,createdAt:serverTimestamp()});closeModal();
-};
-window.deleteCarMaintenance=async id=>{if(confirm('Eliminare questo intervento?')){await deleteDoc(docFor('carMaintenance',id));closeModal();}};
-
-function renderMore(){
-  pageEl.innerHTML=`<div class="card section"><h2>Tutto il resto</h2><div class="more-grid">
-    <button class="more-item" onclick="window.goPage('agenda')"><span class="more-icon">□</span><span><strong>Agenda</strong><small>Vista settimanale e mensile</small></span><span class="more-chevron">›</span></button>
-    <button class="more-item" onclick="window.goPage('auto')"><span class="more-icon">🚗</span><span><strong>Manutenzione auto</strong><small>Interventi, costi e prossime scadenze</small></span><span class="more-chevron">›</span></button>
-    <button class="more-item" onclick="window.goPage('letture')"><span class="more-icon">◫</span><span><strong>Letture contatori</strong><small>Consumi e letture registrate</small></span><span class="more-chevron">›</span></button>
-    <button class="more-item" onclick="window.goPage('tariffe')"><span class="more-icon">€</span><span><strong>Tariffe</strong><small>Fornitori e condizioni</small></span><span class="more-chevron">›</span></button>
-    <button class="more-item" onclick="window.goPage('impostazioni')"><span class="more-icon">⚙</span><span><strong>Impostazioni</strong><small>Account, backup e sicurezza</small></span><span class="more-chevron">›</span></button>
-  </div></div>`;
-}
-
-function renderSettings(){
-  const count={bills:state.bills.length,budgets:state.budgets.length,shopping:state.shopping.length,events:state.events.length,carMaintenance:state.carMaintenance.length,carMileage:state.carMileage.length,readings:state.readings.length,tariffs:state.tariffs.length};
-  pageEl.innerHTML=`<div class="settings-grid">
-  <div class="card section"><h2>Cloud</h2><div class="notice successbox">Account: <b>${esc(user.email)}</b><br>Dati sincronizzati con Firebase.</div>
-  <p>Bollette: <b>${count.bills}</b><br>Budget: <b>${count.budgets}</b><br>Lista spesa: <b>${count.shopping}</b><br>Impegni: <b>${count.events}</b><br>Manutenzioni auto: <b>${count.carMaintenance}</b><br>Rilevazioni km: <b>${count.carMileage}</b><br>Letture: <b>${count.readings}</b><br>Tariffe: <b>${count.tariffs}</b></p></div>
-  <div class="card section"><h2>Backup</h2><p class="muted">Scarica una copia JSON dei dati attualmente sincronizzati.</p><button class="ghost" onclick="window.exportBackup()">Scarica backup</button></div>
-  </div>
-  <div class="card section" style="margin-top:14px"><h2>Interfaccia</h2><div class="notice successbox">Casa+ 2.7 attivo. Identità visiva originale blu petrolio con riepilogo mensile unico. Riepilogo Bollette mensile con quote di competenza, filtri Pagate/Da pagare e arretrati di altri mesi. Il periodo usa selettori separati di mese e anno; AL è facoltativo. Le bollette sono ordinabili per tutte le colonne.</div></div>
-  <div class="card section" style="margin-top:14px"><h2>Sicurezza</h2><div class="notice">I dati sono salvati nel tuo spazio Firestore personale e non sono più inclusi nei file pubblici dell'app.</div></div>`;
-}
 
 function showModal(html){modal.innerHTML=`<div class="modal">${html}</div>`;modal.classList.remove("hidden")}
 function closeModal(){modal.classList.add("hidden");modal.innerHTML=""}window.closeModal=closeModal;
@@ -1543,7 +1009,7 @@ if("serviceWorker" in navigator){
   });
   const updateSpesePlus=async()=>{
     try{
-      const reg=await navigator.serviceWorker.register("./sw.js?v=1.1.0",{updateViaCache:"none"});
+      const reg=await navigator.serviceWorker.register("./sw.js?v=1.2.0",{updateViaCache:"none"});
       await reg.update();
     }catch(e){console.warn(e)}
   };
