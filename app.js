@@ -24,7 +24,8 @@ const fb = initializeApp(firebaseConfig);
 // direttamente all'inizializzazione e non viene più attesa a ogni login.
 const auth = initializeAuth(fb,{persistence:browserLocalPersistence});
 // Configura questo UID dopo aver creato l’unico account in Firebase Authentication.
-const OWNER_UID = "INSERISCI_UID_COGNATO";
+const OWNER_UID = "L4fFMpxAl1RWVc8wdjxRqlwdMzl2";
+
 
 // Cache Firestore persistente: al riavvio i dati già letti possono comparire
 // dalla cache locale mentre Firestore aggiorna in background.
