@@ -1,6 +1,6 @@
-const CACHE="spese-plus-1-0-1";
+const CACHE="spese-plus-1-1-0";
 const ROOT=self.registration.scope;
-const CORE=["./","./index.html","./styles.css?v=1.0.1","./app.js?v=1.0.1","./firebase-config.js","./home-house.jpg","./manifest.webmanifest?v=1.0.1","./icon-192.png","./icon-512.png"].map(path=>new URL(path,ROOT).toString());
+const CORE=["./","./index.html","./styles.css?v=1.1.0","./app.js?v=1.1.0","./firebase-config.js","./manifest.webmanifest?v=1.1.0","./icon-192.png","./icon-512.png"].map(path=>new URL(path,ROOT).toString());
 
 self.addEventListener("install",event=>{
   self.skipWaiting();

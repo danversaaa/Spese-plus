@@ -7,9 +7,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Spese+">
-  <link rel="manifest" href="./manifest.webmanifest?v=1.0.1">
+  <link rel="manifest" href="./manifest.webmanifest?v=1.1.0">
   <link rel="apple-touch-icon" href="./icon-192.png">
-  <link rel="stylesheet" href="./styles.css?v=1.0.1">
+  <link rel="stylesheet" href="./styles.css?v=1.1.0">
   <title>Spese+ • Bilancio personale</title>
 </head>
 <body>
@@ -27,21 +27,19 @@
       <button id="authSubmit" class="primary" type="submit">Accedi</button>
     </form>
     <div id="authMsg" class="msg"></div>
-    <div class="privacy-note">Accesso riservato all’utente autorizzato. Nessuna registrazione pubblica.</div><div class="build-badge">Spese+ 1.0.1</div>
+    <div class="privacy-note">Accesso riservato all’utente autorizzato. Nessuna registrazione pubblica.</div><div class="build-badge">Spese+ 1.1.0</div>
   </div>
 </div>
 
 <div id="appView" class="app hidden">
   <aside class="sidebar">
     <div class="brand">Spese<span>+</span><small>Bilancio personale</small></div>
-    <nav>
-      <button data-page="dashboard" class="active"><span class="nav-icon">⌂</span><span>Home</span></button>
-      <button data-page="spese"><span class="nav-icon">▤</span><span>Spese</span></button>
-      <button data-page="entrate"><span class="nav-icon">€</span><span>Entrate</span></button>
-      <button data-page="bollette"><span class="nav-icon">⚡</span><span>Bollette</span></button>
-      <button class="mobile-only" data-page="altro"><span class="nav-icon">•••</span><span>Altro</span></button>
-      <button class="desktop-only" data-page="statistiche"><span class="nav-icon">▥</span><span>Statistiche</span></button>
-      <button class="desktop-only" data-page="impostazioni"><span class="nav-icon">⚙</span><span>Impostazioni</span></button>
+    <nav aria-label="Navigazione principale">
+      <button data-page="dashboard" class="active"><span class="nav-icon nav-modern-icon nav-home-icon"><svg viewBox="0 0 24 24"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg></span><span>Home</span></button>
+      <button data-page="movimenti"><span class="nav-icon nav-modern-icon nav-bills-icon"><svg viewBox="0 0 24 24"><path d="M5 2h14v20l-3-2-4 2-4-2-3 2zM8 8h8M8 12h8M8 16h5"/></svg></span><span>Movimenti</span></button>
+      <button class="add-nav" data-action="quickadd" aria-label="Aggiungi movimento"><span class="nav-icon">+</span><span>Nuova</span></button>
+      <button data-page="categorie"><span class="nav-icon nav-modern-icon nav-category-icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span><span>Categorie</span></button>
+      <button data-page="altro"><span class="nav-icon nav-modern-icon nav-more-icon"><svg viewBox="0 0 24 24"><circle cx="5.5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="18.5" cy="12" r="1.5"/></svg></span><span>Altro</span></button>
     </nav>
   </aside>
   <main>
@@ -95,7 +93,7 @@
   });
 </script>
 <script type="module">
-  import("./app.js?v=1.0.1")
+  import("./app.js?v=1.1.0")
     .then(() => {
       window.CASA_APP_READY = true;
       const msg = document.getElementById("authMsg");

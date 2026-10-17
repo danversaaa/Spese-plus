@@ -759,3 +759,87 @@ body[data-page="bollette"] .bill-year-scope{font-size:11px;font-weight:750;color
 .finance-stat-track{height:9px;background:#e8eef5;border-radius:10px;overflow:hidden}
 .finance-stat-track i{display:block;height:100%;background:#4c86c2;border-radius:10px}
 @media(max-width:550px){.finance-hero{padding:20px 17px}.finance-two{gap:9px}.finance-summary-card{padding:13px}.finance-stat-row{grid-template-columns:minmax(68px,1fr) 1.4fr minmax(80px,auto);font-size:.72rem}}
+
+/* Spese+ 1.1.0 — Home e navigazione nello stile Casa+, senza fotografia */
+body[data-page="dashboard"],body[data-page="movimenti"],body[data-page="categorie"]{background:linear-gradient(180deg,#f7faff 0%,#eff6ff 100%);color:#10233f}
+.sp-home,.sp-subpage{max-width:1100px;margin:0 auto}
+.sp-home{display:grid;gap:17px;padding-bottom:22px}
+.sp-welcome{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 7px 1px}
+.sp-welcome h1{font-size:clamp(24px,4vw,36px);font-weight:780;letter-spacing:-.047em;line-height:1.1;margin:0 0 7px;color:#10233f}
+.sp-welcome h1 b{font-weight:820}
+.sp-welcome p{margin:0;color:#64758f;font-size:15px}
+.sp-welcome-actions{display:flex;gap:9px;align-self:center}
+.sp-welcome-actions button{border:0;width:43px;height:43px;display:grid;place-items:center;border-radius:50%;background:#eaf2fd;color:#102d54}
+.sp-welcome-actions svg{width:22px;height:22px}
+.sp-blue-card{background:linear-gradient(126deg,#1677f2 0%,#0c8ee8 55%,#08a8da 100%);color:#fff;border-radius:24px;padding:24px 26px 21px;box-shadow:0 13px 30px rgba(20,118,224,.17)}
+.sp-blue-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:30px}
+.sp-month-switch{display:flex;align-items:center;gap:8px;min-width:0}
+.sp-month-switch span{font-size:19px;letter-spacing:.015em;font-weight:800;white-space:nowrap}
+.sp-month-switch button{border:0;background:transparent;color:inherit;font-size:27px;line-height:1;padding:1px 4px;font-weight:500}
+.sp-blue-details{border:0;background:transparent;color:#fff;font-weight:750;font-size:13px;white-space:nowrap;padding:5px 0}
+.sp-blue-pair{display:grid;grid-template-columns:1fr 1fr;margin-bottom:17px}
+.sp-blue-pair button{position:relative;border:0;background:transparent;color:#fff;text-align:left;padding:9px 26px 15px 2px;display:grid;gap:8px;min-width:0}
+.sp-blue-pair button+button{border-left:1px solid rgba(255,255,255,.48);padding-left:27px}
+.sp-blue-pair span,.sp-blue-balance>span{font-size:16px;line-height:1.25;color:rgba(255,255,255,.94)}
+.sp-blue-pair strong{font-size:clamp(22px,3.6vw,36px);line-height:1.15;letter-spacing:-.035em;white-space:nowrap}
+.sp-blue-pair i{position:absolute;right:12px;top:49%;font-style:normal;font-size:24px;opacity:.88}
+.sp-blue-balance{border-top:1px solid rgba(255,255,255,.44);padding:18px 2px 0;display:grid;gap:7px}
+.sp-blue-balance strong{font-size:clamp(32px,4vw,42px);line-height:1.08;letter-spacing:-.035em}
+.sp-blue-balance small{color:rgba(255,255,255,.78);font-size:11px}
+.sp-blue-balance .sp-balance-negative{color:#ffe1e1}
+.sp-tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.sp-tile{display:grid;grid-template-columns:45px minmax(0,1fr) 12px;align-items:center;gap:12px;border:1px solid #e4edf9;border-radius:21px;padding:15px 16px;text-align:left;color:#10233f;min-height:85px;box-shadow:0 4px 15px rgba(24,73,125,.025)}
+.sp-tile b{font-size:16px;line-height:1.2;font-weight:750;white-space:normal}
+.sp-tile-icon{width:45px;height:45px;border-radius:15px;display:grid;place-items:center;background:rgba(255,255,255,.5)}
+.sp-tile-icon svg{width:25px;height:25px}
+.sp-tile-chevron{font-size:26px;color:#52677d;font-weight:300}
+.sp-tone-rose{background:linear-gradient(120deg,#ffe9ee,#fbeef1)}.sp-tone-rose .sp-tile-icon{background:#f8d1dc;color:#d62958}
+.sp-tone-mint{background:linear-gradient(120deg,#e0faf4,#e5f9f5)}.sp-tone-mint .sp-tile-icon{background:#c7f1e6;color:#009f82}
+.sp-tone-cream{background:linear-gradient(120deg,#fff8e9,#fffdf7)}.sp-tone-cream .sp-tile-icon{background:#fff0d0;color:#d68a04}
+.sp-tone-lavender{background:linear-gradient(120deg,#f3efff,#faf8ff)}.sp-tone-lavender .sp-tile-icon{background:#e5ddff;color:#7656cf}
+.sp-tone-ice{background:linear-gradient(120deg,#f0f7ff,#fff)}.sp-tone-ice .sp-tile-icon{background:#dceeff;color:#157ddd}
+.sp-tone-white{background:#fff}.sp-tone-white .sp-tile-icon{background:#e9f0fb;color:#6a7c96}
+.sp-panel{background:#fff;border:1px solid #e3ebf6;border-radius:24px;padding:19px 21px;box-shadow:0 6px 22px rgba(31,72,111,.035);min-width:0}
+.sp-panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:9px}
+.sp-panel-head h2{font-size:23px;letter-spacing:-.04em;margin:0;color:#10233f}
+.sp-panel-head button{border:1px solid #e5edf6;background:#f9fbff;color:#152d50;border-radius:22px;padding:9px 12px;font-size:12px;font-weight:750;white-space:nowrap}
+.sp-activity-row,.sp-category-row{display:grid;grid-template-columns:43px minmax(0,1fr) auto 10px;align-items:center;gap:11px;border:0;border-bottom:1px solid #e9eff6;background:transparent;width:100%;padding:13px 0;text-align:left;color:#10233f}
+.sp-activity-row:last-child,.sp-category-row:last-child{border-bottom:0}
+.sp-activity-icon{width:42px;height:42px;display:grid;place-items:center;border-radius:15px;font-size:19px;font-weight:700;flex-shrink:0}
+.sp-icon-green{background:#d9f6ec;color:#009a7a}.sp-icon-blue{background:#dfedff;color:#1677e7}.sp-icon-amber{background:#fff0d8;color:#c5800c}.sp-icon-pink{background:#ffe0e5;color:#be3152}.sp-icon-violet{background:#eee7ff;color:#7251cb}.sp-icon-light{background:#fff1d7;color:#d78e0d}.sp-icon-gray{background:#eef2f7;color:#64758a}
+.sp-activity-main{display:grid;gap:4px;min-width:0}.sp-activity-main b{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.sp-activity-main small{font-size:11px;color:#6a7e98;line-height:1.4}
+.sp-activity-row strong,.sp-category-row strong{font-size:14px;white-space:nowrap;letter-spacing:-.02em}
+.sp-positive{color:#009d7b!important}.sp-negative{color:#e33f59!important}.sp-chevron{color:#8191a5;font-size:20px}
+.sp-empty{color:#70819a;font-size:13px;padding:12px 0;margin:0;line-height:1.5}
+.sp-trend-panel p{font-size:13px;color:#64758d}.sp-trend-panel p b{color:#10233f}.sp-trend-panel>small{font-size:12px;color:#2a6eab}
+.sp-subpage .sp-panel{margin-top:3px}
+.sp-sub-kpis{display:grid;grid-template-columns:1fr 1fr;gap:12px}.sp-sub-kpis>div{background:#fff;border:1px solid #e4edf8;border-radius:18px;padding:15px;display:grid;gap:6px}.sp-sub-kpis small{color:#6b7c94;font-size:12px}.sp-sub-kpis b{font-size:22px}
+.sp-subpage .finance-month-bar{color:#18345a}
+nav button .nav-modern-icon svg{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.nav-category-icon{background:#f0edff;color:#7d64d8!important}
+nav button[data-page="movimenti"].active,nav button[data-page="categorie"].active{color:#1677f2!important}
+@media(max-width:760px){
+ body[data-page="dashboard"] .top{display:none}
+ body[data-page="dashboard"] main{padding:calc(16px + env(safe-area-inset-top)) 14px 20px}
+ body[data-page="dashboard"] .sidebar,body[data-page="movimenti"] .sidebar,body[data-page="categorie"] .sidebar{background:rgba(255,255,255,.97)!important}
+ .sidebar nav{grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:0!important}
+ .sidebar nav button{height:65px;font-size:10px;gap:4px;padding:4px 0}
+ .sidebar nav button .nav-modern-icon{width:32px!important;height:32px!important;border-radius:12px}
+ .sidebar nav button .nav-modern-icon svg{width:19px;height:19px}
+ .sidebar nav button.add-nav .nav-icon{width:46px!important;height:46px!important;border-radius:50%;font-size:31px!important;margin-top:-11px!important;background:linear-gradient(145deg,#2387ff,#0877ea)!important;color:#fff!important;box-shadow:0 7px 18px rgba(22,119,242,.28)!important}
+ .sidebar nav button.add-nav span:last-child{margin-top:-1px}
+ .sp-home{gap:14px}
+ .sp-welcome{padding:0 5px 2px;margin-bottom:1px}
+ .sp-welcome h1{font-size:25px}.sp-welcome p{font-size:13px}
+ .sp-welcome-actions button{width:35px;height:35px}.sp-welcome-actions svg{width:19px;height:19px}
+ .sp-blue-card{border-radius:22px;padding:18px 17px 19px}
+ .sp-blue-head{margin-bottom:24px}.sp-month-switch{gap:2px}.sp-month-switch span{font-size:15px}.sp-month-switch button{font-size:23px;padding:0 2px}
+ .sp-blue-details{font-size:11px}
+ .sp-blue-pair button{gap:8px;padding-right:14px}.sp-blue-pair button+button{padding-left:15px}.sp-blue-pair span,.sp-blue-balance>span{font-size:13px}.sp-blue-pair strong{font-size:clamp(19px,5vw,27px)}.sp-blue-pair i{right:2px;font-size:17px}
+ .sp-blue-balance strong{font-size:32px}
+ .sp-tiles{gap:9px}.sp-tile{grid-template-columns:34px minmax(0,1fr) 8px;gap:8px;padding:11px 10px;min-height:70px;border-radius:17px}.sp-tile-icon{width:34px;height:34px;border-radius:12px}.sp-tile-icon svg{width:20px;height:20px}.sp-tile b{font-size:12px}.sp-tile-chevron{font-size:20px}
+ .sp-panel{border-radius:20px;padding:15px 15px}.sp-panel-head h2{font-size:21px}.sp-panel-head button{font-size:11px;padding:8px 10px}
+ .sp-activity-row,.sp-category-row{grid-template-columns:36px minmax(0,1fr) auto 8px;gap:8px;padding:12px 0}.sp-activity-icon{width:36px;height:36px;font-size:17px;border-radius:12px}.sp-activity-main b{font-size:13px}.sp-activity-main small{font-size:10px}.sp-activity-row strong,.sp-category-row strong{font-size:12px}
+ .sp-sub-kpis b{font-size:19px}
+}
+@media(max-width:365px){.sp-welcome h1{font-size:22px}.sp-welcome-actions{gap:4px}.sp-blue-pair strong{font-size:18px}.sp-month-switch span{font-size:13px}.sp-blue-details{font-size:10px}.sp-tile b{font-size:11px}}

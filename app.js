@@ -26,7 +26,6 @@ const auth = initializeAuth(fb,{persistence:browserLocalPersistence});
 // Configura questo UID dopo aver creato l’unico account in Firebase Authentication.
 const OWNER_UID = "L4fFMpxAl1RWVc8wdjxRqlwdMzl2";
 
-
 // Cache Firestore persistente: al riavvio i dati già letti possono comparire
 // dalla cache locale mentre Firestore aggiorna in background.
 let db;
@@ -331,17 +330,19 @@ function setActiveNav(){
   document.querySelectorAll("nav button").forEach(x=>x.classList.remove("active"));
   const direct=document.querySelector(`nav button[data-page="${page}"]`);
   if(direct) direct.classList.add("active");
-  else if(["statistiche","impostazioni"].includes(page)){
+  else if(["spese","entrate"].includes(page)){
+    document.querySelector('nav button[data-page="movimenti"]')?.classList.add("active");
+  }else if(["statistiche","impostazioni","bollette"].includes(page)){
     document.querySelector('nav button[data-page="altro"]')?.classList.add("active");
   }
 }
 window.goPage=p=>{
-  if(!["dashboard","spese","entrate","bollette","statistiche","impostazioni","altro"].includes(p))p="dashboard";
+  if(!["dashboard","movimenti","categorie","spese","entrate","bollette","statistiche","impostazioni","altro"].includes(p))p="dashboard";
   if(p==="bollette"){billHomeScope=null;billStatusTab="all";}
   page=p;setActiveNav();render();window.scrollTo({top:0,behavior:"smooth"});
 };
 document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
-  if(b.dataset.action==="newbill"){window.openQuickAdd();return}
+  if(b.dataset.action==="quickadd"){window.openQuickAdd();return}
   if(b.dataset.page)window.goPage(b.dataset.page);
 });
 window.openQuickAdd=()=>showModal(`<div class="modal-head"><h2>Aggiungi</h2><button class="mini" onclick="window.closeModal()">×</button></div><div class="quick-add-grid quick-add-two"><button onclick="window.closeModal();window.editExpense()"><b>+ Nuova spesa</b></button><button onclick="window.closeModal();window.editIncome()"><b>+ Nuova entrata</b></button><button onclick="window.closeModal();window.editBill()"><b>+ Bolletta luce</b></button></div>`);
@@ -349,8 +350,8 @@ window.openQuickAdd=()=>showModal(`<div class="modal-head"><h2>Aggiungi</h2><but
 function render(){
   if(!user)return;
   document.body.dataset.page=page;
-  titleEl.textContent=({dashboard:"Spese+",bollette:"Bollette Luce",spese:"Spese",entrate:"Entrate",statistiche:"Statistiche",impostazioni:"Impostazioni",altro:"Altro"})[page]||"Spese+";
-  ({dashboard:renderFinanceDashboard,bollette:renderBills,spese:renderExpenses,entrate:renderIncomes,statistiche:renderFinanceStats,impostazioni:renderFinanceSettings,altro:renderFinanceMore})[page]();
+  titleEl.textContent=({dashboard:"Spese+",movimenti:"Movimenti",categorie:"Categorie",bollette:"Bollette Luce",spese:"Spese",entrate:"Entrate",statistiche:"Statistiche",impostazioni:"Impostazioni",altro:"Altro"})[page]||"Spese+";
+  ({dashboard:renderFinanceDashboard,movimenti:renderFinanceMovements,categorie:renderFinanceCategories,bollette:renderBills,spese:renderExpenses,entrate:renderIncomes,statistiche:renderFinanceStats,impostazioni:renderFinanceSettings,altro:renderFinanceMore})[page]();
 }
 function yearBills(){return state.bills.filter(b=>hasCompetenceYear(b,selectedYear))}
 function monthDivisor(){const n=new Date(),y=selectedYear;if(y<n.getFullYear())return 12;if(y>n.getFullYear())return 1;return n.getMonth()+1}
@@ -475,23 +476,74 @@ function financeCategoryTotals(key){
   const light=financeSummary(key).electricity;if(light)totals.set("Luce",(totals.get("Luce")||0)+light);
   return [...totals.entries()].sort((a,b)=>b[1]-a[1]);
 }
+function financeIconSvg(name){
+  const paths={
+    home:'<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/>',
+    settings:'<circle cx="12" cy="12" r="3"/><path d="M10 2h4l.7 2.4 2 .9 2.2-1.2 2.8 2.8-1.2 2.2.9 2L24 12l-2.6.9-.9 2 1.2 2.2-2.8 2.8-2.2-1.2-2 .9L14 22h-4l-.7-2.4-2-.9-2.2 1.2-2.8-2.8 1.2-2.2-.9-2L0 12l2.6-.9.9-2-1.2-2.2 2.8-2.8 2.2 1.2 2-.9z" transform="translate(1 1) scale(.91)"/>',
+    user:'<circle cx="12" cy="8" r="4"/><path d="M4.5 21v-2a7.5 7.5 0 0 1 15 0v2z"/>',
+    list:'<path d="M9 6h12M9 12h12M9 18h12"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/>',
+    stats:'<path d="M4 20V12h4v8M10 20V4h4v16M16 20v-11h4v11"/>',
+    bolt:'<path d="m13 2-9 12h7l-1 8 10-13h-7z"/>',
+    grid:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
+    plus:'<path d="M12 4v16M4 12h16"/>',
+    calendar:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18M7 14h3M14 14h3"/>',
+    wallet:'<rect x="3" y="6" width="18" height="15" rx="3"/><path d="M3 10h18M15 15h3M6 6V4h12"/>',
+    bag:'<path d="M5 9h14l-1 12H6zM9 9V7a3 3 0 0 1 6 0v2"/>',
+    arrow:'<path d="M9 18l6-6-6-6"/>',
+    receipt:'<path d="M5 2h14v20l-3-2-4 2-4-2-3 2zM8 8h8M8 12h8M8 16h5"/>'
+  };
+  return `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${paths[name]||paths.grid}</svg>`;
+}
+function financeTile(title,icon,tone,action){
+  return `<button type="button" class="sp-tile sp-tone-${tone}" onclick="${action}"><span class="sp-tile-icon">${financeIconSvg(icon)}</span><b>${title}</b><span class="sp-tile-chevron">›</span></button>`;
+}
+function financeHomeRows(items,kind,limit=4){
+  const sorted=[...items].sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))).slice(0,limit);
+  if(!sorted.length)return `<p class="sp-empty">Ancora nessuna ${kind==='income'?'entrata':'spesa'} registrata in questo mese.</p>`;
+  return sorted.map(x=>{
+    const income=kind==='income',bill=kind==='bill';
+    const name=bill?'Bolletta Luce':(x.description||x.category||(income?'Entrata':'Spesa'));
+    const icon=bill?'⚡':income?'€':(FINANCE_ICONS[x.category]||'•');
+    const tone=bill?'light':income?'green':financeCategoryTone(x.category);
+    const click=bill?`window.goPage('bollette')`:income?`window.editIncome('${x.id}')`:`window.editExpense('${x.id}')`;
+    return `<button type="button" class="sp-activity-row" onclick="${click}"><span class="sp-activity-icon sp-icon-${tone}">${icon}</span><span class="sp-activity-main"><b>${esc(name)}</b><small>${fmtDate(x.date)}${bill?' · Luce':x.category?' · '+esc(x.category):''}</small></span><strong class="${income?'sp-positive':'sp-negative'}">${income?'+':'−'} ${money(bill?x.amount:x.amount)}</strong><span class="sp-chevron">›</span></button>`;
+  }).join('');
+}
+function financeCategoryTone(name){return ({'Alimentari':'green','Pranzi e cene':'blue','Trasporti':'amber','Casa':'pink','Salute':'pink','Tempo libero':'violet','Abbonamenti':'blue','Shopping':'amber','Luce':'pink'})[name]||'gray'}
+function financeMonthPicker(){
+  return `<div class="sp-month-switch"><button type="button" onclick="window.changeFinanceMonth(-1)" aria-label="Mese precedente">‹</button><span>${monthNamesLong[financeMonth-1].toUpperCase()} ${selectedYear}</span><button type="button" onclick="window.changeFinanceMonth(1)" aria-label="Mese successivo">›</button></div>`;
+}
 function renderFinanceDashboard(){
-  const key=financeKey(),prev=previousFinanceKey(),cur=financeSummary(key),old=financeSummary(prev);
-  const categories=financeCategoryTotals(key);
-  const pending=state.bills.filter(b=>b.utenza==="Luce"&&!isPaid(b));
-  pageEl.innerHTML=`<div class="finance-screen">
-    ${financeMonthHeader()}
-    <section class="finance-hero"><span>DISPONIBILE NEL MESE</span><strong class="${cur.balance<0?'finance-negative':''}">${money(cur.balance)}</strong><small>Entrate − spese sostenute</small></section>
-    <div class="finance-two"><button class="finance-summary-card" onclick="window.goPage('entrate')"><span>Entrate</span><b>${money(cur.income)}</b><small>Stipendio e altre entrate</small></button><button class="finance-summary-card" onclick="window.goPage('spese')"><span>Spese</span><b>${money(cur.expenses)}</b><small>${esc(financeTrend(cur.expenses,old.expenses))}</small></button></div>
-    <section class="card section"><div class="section-head"><div><h2>Confronto con il mese scorso</h2><p class="muted">${esc(monthLabel(prev))} → ${esc(monthLabel(key))}</p></div></div>
-      <div class="finance-comparison"><div><span>Mese precedente</span><b>${money(old.expenses)}</b></div><div><span>Mese attuale</span><b>${money(cur.expenses)}</b></div></div><p class="muted">${esc(financeTrend(cur.expenses,old.expenses))}</p></section>
-    <section class="card section"><div class="section-head"><h2>Spese per categoria</h2><button class="ghost" onclick="window.goPage('statistiche')">Statistiche ›</button></div>
-      ${categories.length?categories.map(([name,total])=>`<div class="finance-category-row"><span class="finance-category-icon">${FINANCE_ICONS[name]||'•'}</span><span>${esc(name)}</span><strong>${money(total)}</strong></div>`).join(''):'<p class="muted">Nessuna spesa registrata nel mese.</p>'}
+  const now=new Date(),key=financeKey(),prev=previousFinanceKey(),cur=financeSummary(key),old=financeSummary(prev);
+  const expenses=financeMonthItems(state.expenses,key);
+  const incomes=financeMonthItems(state.incomes,key);
+  const light=cur.light.map(b=>({id:b.id,date:b.dataPagamento,amount:financeAmount(b.importo),category:'Luce'}));
+  const recentExpenses=[...expenses.map(x=>({...x,kind:'expense'})),...light.map(x=>({...x,kind:'bill'}))].sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))).slice(0,4);
+  const monthTitle=monthNamesLong[financeMonth-1].toUpperCase()+' '+selectedYear;
+  pageEl.innerHTML=`<div class="sp-home">
+    <section class="sp-welcome"><div><h1>${homeGreeting(now)}, <b>Peppe</b></h1><p>${longItalianDate(now)}</p></div><div class="sp-welcome-actions"><button type="button" aria-label="Impostazioni" onclick="window.goPage('impostazioni')">${financeIconSvg('settings')}</button><button type="button" aria-label="Account" onclick="window.goPage('impostazioni')">${financeIconSvg('user')}</button></div></section>
+    <section class="sp-blue-card">
+      <div class="sp-blue-head"><div class="sp-month-switch"><button type="button" onclick="window.changeFinanceMonth(-1)" aria-label="Mese precedente">‹</button><span>${monthTitle}</span><button type="button" onclick="window.changeFinanceMonth(1)" aria-label="Mese successivo">›</button></div><button type="button" class="sp-blue-details" onclick="window.goPage('movimenti')">Vedi dettagli ›</button></div>
+      <div class="sp-blue-pair"><button type="button" onclick="window.goPage('entrate')"><span>Entrate nel mese</span><strong>${money(cur.income)}</strong><i>›</i></button><button type="button" onclick="window.goPage('spese')"><span>Spese nel mese</span><strong>${money(cur.expenses)}</strong><i>›</i></button></div>
+      <div class="sp-blue-balance"><span>Disponibile nel mese</span><strong class="${cur.balance<0?'sp-balance-negative':''}">${money(cur.balance)}</strong><small>Entrate − spese del mese</small></div>
     </section>
-    <section class="card section"><div class="section-head"><h2>Bollette Luce</h2><button class="ghost" onclick="window.goPage('bollette')">Apri ›</button></div><p>Pagate nel mese: <b>${money(cur.electricity)}</b></p><p class="muted">${pending.length} bollette ancora da pagare (non sottratte dal saldo finché non risultano pagate).</p></section>
-    <div class="finance-two"><button class="primary" onclick="window.editExpense()">+ Nuova spesa</button><button class="ghost" onclick="window.editIncome()">+ Entrata</button></div>
+    <div class="sp-tiles">${financeTile('Nuova spesa','plus','rose','window.editExpense()')}${financeTile('Nuova entrata','plus','mint','window.editIncome()')}${financeTile('Categorie','list','cream',"window.goPage('categorie')")}${financeTile('Statistiche','stats','lavender',"window.goPage('statistiche')")}${financeTile('Bollette Luce','bolt','ice',"window.goPage('bollette')")}${financeTile('Movimenti','receipt','white',"window.goPage('movimenti')")}</div>
+    <section class="sp-panel"><div class="sp-panel-head"><h2>Spese recenti</h2><button type="button" onclick="window.goPage('spese')">Vedi tutte ›</button></div>${recentExpenses.length?recentExpenses.map(x=>financeHomeRows([x],x.kind,1)).join(''):'<p class="sp-empty">Nessuna spesa registrata nel mese.</p>'}</section>
+    <section class="sp-panel"><div class="sp-panel-head"><h2>Entrate recenti</h2><button type="button" onclick="window.goPage('entrate')">Vedi tutte ›</button></div>${financeHomeRows(incomes,'income',3)}</section>
+    <section class="sp-panel sp-trend-panel"><div class="sp-panel-head"><h2>Confronto mensile</h2><button type="button" onclick="window.goPage('statistiche')">Statistiche ›</button></div><p>Spese di ${esc(monthLabel(prev))}: <b>${money(old.expenses)}</b></p><p>Spese di ${esc(monthLabel(key))}: <b>${money(cur.expenses)}</b></p><small>${esc(financeTrend(cur.expenses,old.expenses))}</small></section>
   </div>`;
 }
+function renderFinanceMovements(){
+  const key=financeKey(),s=financeSummary(key);
+  const all=[...financeMonthItems(state.expenses,key).map(x=>({...x,kind:'expense'})),...financeMonthItems(state.incomes,key).map(x=>({...x,kind:'income'})),...s.light.map(b=>({id:b.id,amount:b.importo,date:b.dataPagamento,kind:'bill'}))].sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
+  pageEl.innerHTML=`<div class="finance-screen sp-subpage">${financeMonthHeader()}<div class="sp-sub-kpis"><div><small>Entrate</small><b class="sp-positive">${money(s.income)}</b></div><div><small>Spese</small><b class="sp-negative">${money(s.expenses)}</b></div></div><section class="sp-panel"><div class="sp-panel-head"><h2>Movimenti del mese</h2><button type="button" onclick="window.openQuickAdd()">+ Aggiungi</button></div>${all.length?all.map(x=>financeHomeRows([x],x.kind,1)).join(''):'<p class="sp-empty">Nessun movimento registrato.</p>'}</section></div>`;
+}
+function renderFinanceCategories(){
+  const key=financeKey(),prev=previousFinanceKey(),cats=financeCategoryTotals(key),old=new Map(financeCategoryTotals(prev));
+  pageEl.innerHTML=`<div class="finance-screen sp-subpage">${financeMonthHeader()}<section class="sp-panel"><div class="sp-panel-head"><h2>Spese per categoria</h2><button type="button" onclick="window.goPage('spese')">Tutte ›</button></div>${cats.length?cats.map(([name,total])=>{const before=old.get(name)||0;const trend=before?((total-before)/before*100):null;const go=name==='Luce'?"window.goPage('bollette')":`window.openFinanceCategory('${esc(name)}')`;return `<button class="sp-category-row" type="button" onclick="${go}"><span class="sp-activity-icon sp-icon-${financeCategoryTone(name)}">${FINANCE_ICONS[name]||'•'}</span><span class="sp-activity-main"><b>${esc(name)}</b><small>${trend===null?'Nessun confronto col mese precedente':`${trend>0?'+':''}${trend.toLocaleString('it-IT',{maximumFractionDigits:1})}% rispetto al mese precedente`}</small></span><strong>${money(total)}</strong><span class="sp-chevron">›</span></button>`}).join(''):'<p class="sp-empty">Nessuna spesa registrata nel mese.</p>'}</section></div>`;
+}
+window.openFinanceCategory=name=>{financeFilter=name;window.goPage('spese')};
+
 function financeItemRows(items,kind){
   if(!items.length)return '<div class="home-empty">Nessuna registrazione per questo mese.</div>';
   return [...items].sort((a,b)=>String(b.date||"").localeCompare(String(a.date||""))).map(x=>`<button class="finance-entry-row" onclick="window.${kind==='expense'?'editExpense':'editIncome'}('${x.id}')"><span class="finance-entry-icon">${kind==='expense'?(FINANCE_ICONS[x.category]||'•'):'€'}</span><span class="finance-entry-main"><b>${esc(x.description||x.category||'Voce')}</b><small>${fmtDate(x.date)} · ${esc(x.category||'Entrata')}</small></span><strong>${kind==='expense'?'-':'+'}${money(x.amount)}</strong><span>›</span></button>`).join('');
@@ -550,7 +602,7 @@ function renderFinanceStats(){
   const last=[];for(let n=5;n>=0;n--){const i=selectedYear*12+financeMonth-1-n;const key=buildMonthKey(Math.floor(i/12),i%12+1);last.push({key,...financeSummary(key)})}
   pageEl.innerHTML=`<div class="finance-screen">${financeMonthHeader()}<section class="card section"><h2>Andamento ultimi 6 mesi</h2>${last.map(x=>`<div class="finance-stat-row"><span>${esc(monthLabel(x.key))}</span><div class="finance-stat-track"><i style="width:${Math.min(100,100*x.expenses/Math.max(1,...last.map(z=>z.expenses)))}%"></i></div><strong>${money(x.expenses)}</strong></div>`).join('')}</section><section class="card section"><h2>Spese per categoria</h2>${categories.length?categories.map(([name,value])=>`<div class="finance-stat-row"><span>${esc(name)}</span><div class="finance-stat-track"><i style="width:${Math.min(100,100*value/max)}%"></i></div><strong>${money(value)}</strong></div>`).join(''):'<p class="muted">Nessun dato disponibile.</p>'}</section><section class="card section"><h2>Bilancio mensile</h2><p>Entrate: <b>${money(cur.income)}</b></p><p>Uscite: <b>${money(cur.expenses)}</b></p><p>Disponibile: <b>${money(cur.balance)}</b></p></section></div>`;
 }
-function renderFinanceMore(){pageEl.innerHTML=`<div class="card section"><h2>Altre funzioni</h2><div class="more-grid"><button class="more-item" onclick="window.goPage('statistiche')"><span class="more-icon">▥</span><span><strong>Statistiche</strong><small>Confronti mensili e categorie</small></span><span class="more-chevron">›</span></button><button class="more-item" onclick="window.goPage('impostazioni')"><span class="more-icon">⚙</span><span><strong>Impostazioni</strong><small>Account e backup</small></span><span class="more-chevron">›</span></button></div></div>`}
+function renderFinanceMore(){pageEl.innerHTML=`<div class="card section"><h2>Altre funzioni</h2><div class="more-grid"><button class="more-item" onclick="window.goPage('entrate')"><span class="more-icon">€</span><span><strong>Entrate</strong><small>Stipendio e altre entrate</small></span><span class="more-chevron">›</span></button><button class="more-item" onclick="window.goPage('spese')"><span class="more-icon">▤</span><span><strong>Spese</strong><small>Elenco e filtri</small></span><span class="more-chevron">›</span></button><button class="more-item" onclick="window.goPage('bollette')"><span class="more-icon">⚡</span><span><strong>Bollette Luce</strong><small>Pagamenti e scadenze</small></span><span class="more-chevron">›</span></button><button class="more-item" onclick="window.goPage('statistiche')"><span class="more-icon">▥</span><span><strong>Statistiche</strong><small>Confronti mensili e categorie</small></span><span class="more-chevron">›</span></button><button class="more-item" onclick="window.goPage('impostazioni')"><span class="more-icon">⚙</span><span><strong>Impostazioni</strong><small>Account e backup</small></span><span class="more-chevron">›</span></button></div></div>`}
 function renderFinanceSettings(){pageEl.innerHTML=`<div class="card section"><h2>Account</h2><p>${esc(user?.email||'')}</p><p class="muted">Accesso riservato all’unico utente autorizzato.</p></div><div class="card section" style="margin-top:14px"><h2>Backup</h2><p class="muted">Esporta bollette Luce, spese ed entrate in formato JSON.</p><button class="primary" onclick="window.exportBackup()">Scarica backup</button></div>`}
 // ======================= Fine gestione Spese+ =======================
 
@@ -1487,11 +1539,11 @@ if("serviceWorker" in navigator){
     if(swReloaded)return;
     swReloaded=true;
     // Una sola ricarica quando entra in controllo il nuovo Service Worker.
-    window.location.reload();
+    // Non interrompere la sessione in corso: la versione aggiornata sarà visibile al prossimo avvio.
   });
   const updateSpesePlus=async()=>{
     try{
-      const reg=await navigator.serviceWorker.register("./sw.js?v=1.0.1",{updateViaCache:"none"});
+      const reg=await navigator.serviceWorker.register("./sw.js?v=1.1.0",{updateViaCache:"none"});
       await reg.update();
     }catch(e){console.warn(e)}
   };
