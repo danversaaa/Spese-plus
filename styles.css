@@ -1,0 +1,761 @@
+:root{
+  --bg:#f5f5f7;--card:rgba(255,255,255,.92);--text:#1d1d1f;--muted:#86868b;
+  --line:rgba(0,0,0,.07);--accent:#007aff;--accent-soft:#eaf3ff;--dark:#1d1d1f;
+  --good:#248a5b;--warn:#a86d00;--bad:#d14343;--shadow:0 8px 28px rgba(0,0,0,.055);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{background:var(--bg)}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","Helvetica Neue",Arial,sans-serif;background:var(--bg);color:var(--text);letter-spacing:-.01em}
+button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:none!important}.mobile-only{display:none}
+.auth-shell{min-height:100vh;display:grid;place-items:center;padding:24px;background:radial-gradient(circle at 50% 0,#fff 0,#f5f5f7 56%,#ececf1 100%)}
+.auth-card{width:min(420px,100%);background:rgba(255,255,255,.9);border:1px solid rgba(255,255,255,.8);border-radius:28px;padding:32px;box-shadow:0 30px 80px rgba(0,0,0,.10);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px)}
+.logo{font-size:34px;font-weight:780;letter-spacing:-.045em}.logo span,.brand span{color:var(--accent)}.auth-card p{color:var(--muted);margin:8px 0 24px;line-height:1.45}
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:3px;background:#efeff4;padding:3px;border-radius:12px;margin-bottom:20px}.tabs button{border:0;background:transparent;padding:9px;border-radius:10px;color:#6e6e73;font-weight:650}.tabs button.active{background:#fff;color:#1d1d1f;box-shadow:0 2px 8px rgba(0,0,0,.07)}
+.auth-card form{display:grid;gap:14px}.auth-card label,.field{display:grid;gap:7px;font-size:12px;font-weight:650;color:#6e6e73}
+input,select,textarea{width:100%;border:1px solid rgba(0,0,0,.09);border-radius:12px;background:#fff;padding:11px 12px;outline:none;color:var(--text);transition:.18s ease}
+input:focus,select:focus,textarea:focus{border-color:rgba(0,122,255,.52);box-shadow:0 0 0 4px rgba(0,122,255,.10)}
+.primary,.ghost,.danger,.mini{border-radius:12px;padding:10px 13px;border:1px solid var(--line);background:#fff;transition:.15s ease}.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}.primary:active,.ghost:active,.mini:active{transform:scale(.98)}.ghost{color:#3a3a3c}.danger{color:var(--bad)}
+.msg{min-height:20px;margin-top:10px;color:var(--bad);font-size:12px}.privacy-note{margin-top:16px;padding:12px 14px;background:#f5f5f7;border-radius:14px;color:var(--muted);font-size:11px;line-height:1.5}
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}.sidebar{background:rgba(255,255,255,.82);border-right:1px solid var(--line);padding:25px 14px;position:sticky;top:0;height:100vh;backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px)}
+.brand{font-size:23px;font-weight:780;letter-spacing:-.04em;padding:4px 12px 24px}.brand small{display:block;color:var(--muted);font-size:11px;font-weight:500;letter-spacing:0;margin-top:5px}
+nav{display:grid;gap:5px}nav button{border:0;background:transparent;color:#6e6e73;text-align:left;padding:11px 12px;border-radius:12px;font-weight:590;display:flex;align-items:center;gap:11px}nav button .nav-icon{font-size:17px;width:22px;text-align:center;color:#8e8e93}nav button.active,nav button:hover{background:#ececf1;color:#1d1d1f}nav button.active .nav-icon{color:var(--accent)}
+main{padding:30px 34px 54px;min-width:0;max-width:1440px;width:100%;margin:0 auto}.top{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:22px}.top h1{margin:0;font-size:32px;line-height:1.06;font-weight:760;letter-spacing:-.045em}.muted{color:var(--muted);font-size:12px}.top-actions{display:flex;gap:8px;align-items:center}.top-actions select{width:auto;min-width:88px;background:rgba(255,255,255,.84)}
+.kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:16px}.card{background:var(--card);border:1px solid rgba(255,255,255,.7);border-radius:22px;box-shadow:var(--shadow);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}.kpi{padding:19px 18px;min-height:118px}.kpi .lab{font-size:10.5px;font-weight:720;color:var(--muted);letter-spacing:.05em}.kpi .val{font-size:26px;font-weight:760;letter-spacing:-.04em;margin-top:9px}.kpi .hint{font-size:11px;color:var(--muted);margin-top:6px}.kpi:first-child{background:linear-gradient(145deg,#fff,#f5f9ff);border-color:#edf4ff}.kpi:first-child .val{font-size:31px}
+.grid2{display:grid;grid-template-columns:1.12fr .88fr;gap:16px}.section{padding:20px}.section h2{font-size:18px;letter-spacing:-.025em;margin:0 0 15px;font-weight:720}.utilities{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.utility{border:1px solid var(--line);background:rgba(248,248,250,.72);border-radius:16px;padding:14px}.utility b{display:block;font-size:13px}.utility strong{display:block;font-size:20px;margin-top:7px;letter-spacing:-.035em}.utility .muted{display:block;margin-top:4px}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:16px;background:#fff}table{width:100%;border-collapse:collapse;font-size:12.5px}th,td{padding:11px 12px;border-bottom:1px solid rgba(0,0,0,.055);text-align:left;white-space:nowrap}tbody tr:last-child td{border-bottom:0}th{background:#f7f7f9;color:#8e8e93;font-size:10px;text-transform:uppercase;letter-spacing:.055em}.right{text-align:right}.overdue{color:var(--bad);font-weight:700}
+.badge{display:inline-flex;padding:5px 8px;border-radius:999px;font-size:10.5px;font-weight:700;background:#efeff4;color:#6e6e73}.badge.good{background:#eaf7f0;color:var(--good)}.badge.warn{background:#fff5df;color:var(--warn)}.badge.bad{background:#fff0f1;color:var(--bad)}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}.toolbar input{max-width:280px}.toolbar select{width:auto}.actions{display:flex;gap:5px}.mini{padding:7px 9px;background:#f7f7f9}.empty{text-align:center;color:var(--muted);padding:36px}
+.months{display:grid;gap:9px}.barrow{display:grid;grid-template-columns:34px 1fr 88px;gap:9px;align-items:center}.track{height:9px;background:#efeff4;border-radius:999px;overflow:hidden}.fill{height:100%;background:linear-gradient(90deg,#91c4ff,#007aff);border-radius:999px}
+.modal-back{position:fixed;inset:0;background:rgba(30,30,32,.35);display:flex;align-items:center;justify-content:center;padding:18px;z-index:200;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}.modal{background:#fff;width:min(760px,100%);max-height:90vh;overflow:auto;border-radius:24px;padding:21px;box-shadow:0 30px 80px rgba(0,0,0,.20)}.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}.modal-head h2{margin:0;font-size:20px;letter-spacing:-.03em}.formgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.span2{grid-column:span 2}.span3{grid-column:span 3}.modal-foot{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+.notice{padding:12px 14px;background:#eef6ff;color:#315b99;border-radius:14px;font-size:12px;line-height:1.5;margin-bottom:14px}.dangerbox{background:#fff1f2;color:#9f2731}.successbox{background:#edf9f3;color:#176c4e}
+.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.code{background:#1d1d1f;color:#f5f5f7;padding:14px;border-radius:14px;font:12px ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap;overflow:auto}
+.more-grid{display:grid;gap:10px}.more-item{border:1px solid var(--line);background:#fff;border-radius:16px;padding:16px;display:flex;align-items:center;gap:14px;text-align:left;width:100%;color:var(--text)}.more-icon{width:40px;height:40px;border-radius:12px;background:#f2f2f7;display:grid;place-items:center;font-size:18px;color:var(--accent)}.more-item strong{display:block;font-size:15px}.more-item small{display:block;color:var(--muted);margin-top:3px}.more-chevron{margin-left:auto;color:#c7c7cc;font-size:22px;font-weight:300}
+@media(max-width:1050px){.kpis{grid-template-columns:repeat(2,1fr)}.grid2,.settings-grid{grid-template-columns:1fr}.utilities{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:760px){
+  body{font-size:16px;padding:0 0 calc(84px + env(safe-area-inset-bottom));background:#f5f5f7}.desktop-only{display:none!important}.mobile-only{display:flex}
+  .app{display:block;min-height:100vh}.sidebar{position:fixed;left:0;right:0;bottom:0;top:auto;height:auto;z-index:120;padding:7px 8px calc(6px + env(safe-area-inset-bottom));background:rgba(250,250,252,.92);border:0;border-top:1px solid rgba(0,0,0,.08);box-shadow:0 -6px 28px rgba(0,0,0,.045);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px)}.brand{display:none}
+  nav{display:grid;grid-template-columns:repeat(5,1fr);gap:2px}nav button{min-width:0;height:58px;padding:4px 2px;border-radius:12px;display:flex;flex-direction:column;justify-content:center;gap:2px;text-align:center;font-size:10px;font-weight:600;color:#8e8e93}nav button .nav-icon{font-size:21px;width:auto;line-height:23px;color:#8e8e93}nav button.active,nav button:hover{background:transparent;color:var(--accent)}nav button.active .nav-icon{color:var(--accent)}
+  nav button.add-nav{position:relative;color:var(--accent)}nav button.add-nav .nav-icon{width:42px;height:42px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;font-size:31px;font-weight:300;line-height:1;margin-top:-13px;box-shadow:0 5px 14px rgba(0,122,255,.28)}nav button.add-nav span:last-child{margin-top:-2px}
+  main{padding:18px 14px calc(20px + env(safe-area-inset-bottom));max-width:none}.top{position:sticky;top:0;z-index:40;margin:-18px -14px 18px;padding:calc(14px + env(safe-area-inset-top)) 14px 12px;background:rgba(245,245,247,.88);border-bottom:1px solid rgba(0,0,0,.045);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);align-items:flex-start}.top h1{font-size:29px}.top-actions{gap:6px}.top-actions select,.top-actions button{min-height:38px;padding:8px 10px;font-size:13px}.top .muted{margin-top:4px}
+  .kpis{grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}.kpi{padding:16px;min-height:108px;border-radius:20px}.kpi:first-child{grid-column:1/-1;min-height:132px;padding:20px}.kpi:first-child .val{font-size:36px}.kpi .lab{font-size:10px}.kpi .val{font-size:23px}.kpi .hint{font-size:11px}
+  .grid2{display:grid;grid-template-columns:1fr;gap:12px}.card{border-radius:20px}.section{padding:16px}.section h2{font-size:18px}.utilities{grid-template-columns:1fr 1fr;gap:8px}.utility{padding:13px}.utility strong{font-size:18px}.months{gap:8px}.barrow{grid-template-columns:32px 1fr 78px;font-size:12px}
+  .toolbar{display:grid;grid-template-columns:1fr 1fr;gap:8px}.toolbar .primary{grid-column:1/-1}.toolbar input{max-width:none}.toolbar select{width:100%}.toolbar input,.toolbar select,.toolbar button{min-height:44px;font-size:14px}
+  .bills-table{border:0;background:transparent;overflow:visible}.bills-table table,.bills-table tbody{display:block}.bills-table thead{display:none}.bills-table tr{display:grid;grid-template-columns:1fr auto;gap:5px 10px;background:#fff;border:1px solid rgba(0,0,0,.055);border-radius:18px;padding:14px;margin-bottom:10px;box-shadow:0 5px 18px rgba(0,0,0,.035)}.bills-table td{display:block;border:0;padding:0;white-space:normal}.bills-table td.bill-utility{font-weight:700;font-size:15px}.bills-table td.bill-amount{grid-column:2;grid-row:1;font-weight:760;font-size:16px;text-align:right}.bills-table td.bill-period,.bills-table td.bill-due{color:var(--muted);font-size:12px}.bills-table td.bill-status{grid-column:2;grid-row:2 / span 2;text-align:right;align-self:center}.bills-table td.bill-year{display:none}.bills-table td.bill-actions{grid-column:1/-1;margin-top:8px;padding-top:9px;border-top:1px solid rgba(0,0,0,.055)}.bills-table .actions{justify-content:flex-end}.bills-table .mini{min-width:42px;min-height:38px}
+  .table-wrap:not(.bills-table){-webkit-overflow-scrolling:touch}.table-wrap:not(.bills-table) table{font-size:12px}.table-wrap:not(.bills-table) th,.table-wrap:not(.bills-table) td{padding:10px}
+  .formgrid{grid-template-columns:1fr}.span2,.span3{grid-column:span 1}.modal-back{align-items:flex-end;padding:0}.modal{width:100%;max-height:90vh;border-radius:24px 24px 0 0;padding:20px 16px calc(20px + env(safe-area-inset-bottom))}.modal-head{position:sticky;top:-20px;background:#fff;padding:14px 0 10px;z-index:2}.modal-foot{position:sticky;bottom:calc(-20px - env(safe-area-inset-bottom));background:#fff;padding:12px 0 calc(12px + env(safe-area-inset-bottom));margin-bottom:0}.modal-foot button{min-height:46px}.field input,.field select,.field textarea{min-height:44px;font-size:16px}
+  .settings-grid{grid-template-columns:1fr}.more-grid{gap:9px}.more-item{border-radius:18px;padding:14px}.more-icon{width:42px;height:42px}
+  .auth-shell{padding:18px}.auth-card{padding:26px 20px;border-radius:26px}.auth-card input,.auth-card button{min-height:46px;font-size:16px}
+}
+
+/* --- COMPETENZA MULTI-ANNO V4 --- */
+.competence-field>span{font-size:12px;font-weight:650;color:#6e6e73}.competence-box{border:1px solid var(--line);border-radius:16px;background:#f8f8fa;padding:12px}.competence-row{display:grid;grid-template-columns:1fr 1.25fr auto;gap:9px;align-items:end;margin-bottom:9px}.competence-row label{display:grid;gap:6px;font-size:11px;color:var(--muted);font-weight:650}.competence-row input{background:#fff}.competence-actions{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-top:2px}.competence-summary{font-size:12px;font-weight:700;color:var(--muted);text-align:right}.competence-summary.ok{color:var(--good)}.competence-summary.bad{color:var(--bad)}.competence-help{margin:12px 0 0;line-height:1.45}.bill-year{font-size:11px;color:#6e6e73}
+@media(max-width:760px){.competence-box{padding:10px}.competence-row{grid-template-columns:1fr 1fr auto;gap:7px}.competence-actions{align-items:stretch;flex-direction:column}.competence-summary{text-align:left}.bills-table td.bill-year{display:block;grid-column:1/-1;color:var(--muted);font-size:11px;padding-top:4px}.bills-table td.bill-actions{grid-column:1/-1}}
+
+/* --- COMPETENZA AUTOMATICA V5 --- */
+.period-field>span{font-size:12px;font-weight:650;color:#6e6e73}
+.period-range{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.period-range label{display:grid;gap:6px;font-size:11px;color:var(--muted);font-weight:650}
+.legacy-period{margin-top:8px;padding:9px 10px;border-radius:12px;background:#fff7e6;color:#765b1d;font-size:12px;line-height:1.4}
+.competence-auto{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;border:1px solid var(--line);border-radius:16px;background:#f8f8fa;padding:12px;margin-bottom:10px}
+.auto-competence-preview{min-width:0;font-size:12px;color:var(--muted);line-height:1.45}
+.auto-competence-preview>b{display:block;color:var(--text);font-size:12px;margin-bottom:7px}
+.auto-pills{display:flex;flex-wrap:wrap;gap:6px}
+.auto-pills span{display:inline-flex;align-items:baseline;gap:5px;padding:6px 9px;border-radius:999px;background:#fff;border:1px solid var(--line);font-weight:700;color:var(--text)}
+.auto-pills small{font-size:10px;color:var(--muted);font-weight:600}
+.auto-bad{color:var(--bad);font-weight:700}
+.compact-btn{min-height:36px;padding:7px 10px;white-space:nowrap;font-size:12px}
+.manual-note{font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.4}
+@media(max-width:760px){
+  .period-range{grid-template-columns:1fr 1fr}
+  .competence-auto{flex-direction:column;align-items:stretch}
+  .compact-btn{width:100%;min-height:42px}
+}
+
+/* --- CRUD COMPLETO V6 --- */
+.section-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:14px}.section-head h2{margin:0 0 4px}.section-head p{margin:0}.budget-edit-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.generic-edit-table td:last-child,.generic-edit-table th:last-child{width:82px}.generic-edit-table .actions{justify-content:flex-end}
+@media(max-width:760px){.section-head{align-items:stretch;flex-direction:column}.section-head .primary{width:100%;min-height:44px}.budget-edit-grid{grid-template-columns:1fr 1fr}.generic-edit-table .actions{justify-content:flex-end}.generic-edit-table td:last-child{position:sticky;right:0;background:#fff}.kpis[style*="repeat(3"]{grid-template-columns:1fr!important}}
+
+.build-badge{margin-top:10px;text-align:center;color:#86868b;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+#authSubmit:disabled{opacity:.65;cursor:wait}
+
+.utility-click{
+  border:0;width:100%;font:inherit;color:inherit;text-align:left;cursor:pointer;
+  appearance:none;-webkit-appearance:none;
+}
+.utility-click:active{transform:scale(.99)}
+.period-range select{
+  width:100%;min-height:46px;border:1px solid #d2d2d7;border-radius:12px;
+  background:#fff;padding:0 12px;font:inherit;color:#1d1d1f;
+}
+.modal-kicker{font-size:11px;font-weight:750;letter-spacing:.08em;text-transform:uppercase;color:#86868b;margin-bottom:3px}
+.utility-modal-total{display:flex;justify-content:space-between;align-items:center;padding:15px 16px;border-radius:16px;background:#f5f5f7;margin:4px 0 12px}
+.utility-modal-total span{color:#6e6e73;font-size:13px}
+.utility-modal-total strong{font-size:22px}
+.utility-bill-list{display:grid;gap:8px}
+.utility-bill-row{
+  width:100%;display:flex;justify-content:space-between;align-items:center;gap:12px;
+  border:0;border-radius:16px;background:#f5f5f7;padding:13px 14px;text-align:left;
+  color:#1d1d1f;font:inherit;cursor:pointer;
+}
+.utility-bill-row:active{transform:scale(.99)}
+.utility-bill-main{min-width:0}
+.utility-bill-main b{display:block;font-size:14px}
+.utility-bill-main small,.utility-bill-values small{display:block;color:#86868b;font-size:11px;margin-top:4px}
+.utility-bill-values{text-align:right;white-space:nowrap}
+.utility-bill-values strong{display:block;font-size:16px}
+
+/* --- V7.5 periodo mese/anno + ordinamento bollette --- */
+.period-point{display:grid;gap:6px}
+.period-point>b{font-size:11px;color:var(--muted);letter-spacing:.04em}
+.period-point>b small{font-weight:500;letter-spacing:0}
+.month-year-pair{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(92px,.8fr);gap:7px}
+.month-year-pair select{width:100%;min-height:46px;border:1px solid #d2d2d7;border-radius:12px;background:#fff;padding:0 10px;font:inherit;color:#1d1d1f}
+.sort-th{border:0;background:transparent;padding:0;color:inherit;font:inherit;font-weight:inherit;text-transform:inherit;letter-spacing:inherit;cursor:pointer;white-space:nowrap}
+.sort-th:hover{color:#1d1d1f}
+.sort-direction{white-space:nowrap}
+@media(max-width:760px){
+  .bills-toolbar{grid-template-columns:1fr 1fr}
+  .bills-toolbar #searchBill{grid-column:1/-1}
+  .bills-toolbar #filterStatus{grid-column:1/2}
+  .bills-toolbar #sortBill{grid-column:2/3}
+  .bills-toolbar .sort-direction{grid-column:1/-1}
+  .month-year-pair{grid-template-columns:minmax(0,1.2fr) minmax(88px,.8fr)}
+}
+
+/* --- V8.0 Bollette: riepilogo mensile mobile-first --- */
+.bills-month-head{display:grid;grid-template-columns:48px 1fr 48px;align-items:center;gap:10px;max-width:520px;margin:0 auto 14px;text-align:center}
+.bills-month-head strong{display:block;font-size:22px;letter-spacing:-.035em}
+.month-kicker{font-size:10px;font-weight:750;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+.month-arrow{width:44px;height:44px;border:1px solid var(--line);border-radius:50%;background:#fff;color:var(--text);font-size:30px;line-height:1;display:grid;place-items:center;box-shadow:0 4px 14px rgba(0,0,0,.035)}
+.bill-month-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;max-width:620px;margin:0 auto 14px;padding:4px;border-radius:15px;background:#e9e9ee}
+.bill-month-tabs button{border:0;background:transparent;border-radius:12px;padding:10px 8px;color:#6e6e73;font-weight:700;font-size:13px}
+.bill-month-tabs button span{display:inline-grid;place-items:center;min-width:20px;height:20px;margin-left:4px;padding:0 5px;border-radius:999px;background:rgba(0,0,0,.055);font-size:10px}
+.bill-month-tabs button.active{background:#fff;color:var(--text);box-shadow:0 2px 8px rgba(0,0,0,.07)}
+.bill-month-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.month-kpi{padding:17px 18px;min-height:112px;background:#fff}
+.month-kpi>span{display:block;color:var(--muted);font-size:11px;font-weight:720;text-transform:uppercase;letter-spacing:.045em}
+.month-kpi>strong{display:block;margin-top:9px;font-size:25px;letter-spacing:-.04em}
+.month-kpi>small{display:block;margin-top:5px;color:var(--muted);font-size:11px}
+.month-kpi.due{background:linear-gradient(145deg,#fff,#fff8ea)}
+.month-kpi.paid{background:linear-gradient(145deg,#fff,#f0faf5)}
+.bills-month-section{padding:16px 18px}
+.bills-search-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;margin-bottom:8px}
+.bills-search-row input{min-height:44px;background:#f7f7f9}
+.new-bill-btn{min-width:100px}
+.bills-sort-row{display:flex;gap:8px;margin-bottom:15px}
+.bills-sort-row select{width:auto;min-width:180px;background:#fff}
+.bill-group-head{display:flex;align-items:center;gap:8px;margin:18px 2px 9px}
+.bill-group-head:first-child{margin-top:5px}
+.bill-group-head h2{font-size:17px;margin:0}
+.bill-group-head span{display:inline-grid;place-items:center;min-width:23px;height:23px;padding:0 6px;border-radius:999px;background:#fff0f1;color:var(--bad);font-size:11px;font-weight:750}
+.bill-group-head.paid-head span{background:#eaf7f0;color:var(--good)}
+.monthly-bill-list{display:grid;gap:8px}
+.monthly-bill-card{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:11px;align-items:center;padding:13px 13px;background:#fff;border:1px solid var(--line);border-radius:17px;cursor:pointer;transition:.15s ease}
+.monthly-bill-card:active{transform:scale(.995)}
+.monthly-bill-icon{width:42px;height:42px;display:grid;place-items:center;border-radius:13px;background:#f5f5f7;font-size:20px}
+.monthly-bill-main{min-width:0}
+.monthly-bill-title{font-size:14px;font-weight:750}
+.monthly-bill-meta{font-size:11px;color:var(--muted);margin-top:3px}
+.monthly-bill-main>small{display:block;font-size:10.5px;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.monthly-bill-side{text-align:right;white-space:nowrap}
+.monthly-bill-side>strong{display:block;font-size:17px;letter-spacing:-.025em;margin-bottom:5px}
+.monthly-bill-actions{grid-column:2/4;display:flex;justify-content:flex-end;gap:5px;padding-top:8px;border-top:1px solid rgba(0,0,0,.05)}
+.monthly-bill-actions .mini{min-width:38px}
+.compact-empty{padding:22px 12px;background:#fafafa;border-radius:15px}
+.other-due-card{margin-top:14px;overflow:hidden;background:#fff}
+.other-due-head{width:100%;border:0;background:transparent;padding:17px 18px;display:flex;align-items:center;justify-content:space-between;gap:14px;text-align:left;color:inherit}
+.other-due-head b{display:block;font-size:14px}
+.other-due-head small{display:block;color:var(--muted);font-size:11px;margin-top:4px}
+.other-due-total{display:flex;align-items:center;gap:10px;white-space:nowrap}
+.other-due-total strong{font-size:16px}.other-due-total i{font-style:normal;color:var(--muted)}
+.other-due-list{padding:0 12px 12px;display:grid;gap:7px}
+.other-due-row{width:100%;border:1px solid var(--line);border-radius:14px;background:#f8f8fa;padding:11px 12px;display:flex;justify-content:space-between;align-items:center;gap:10px;text-align:left;color:inherit}
+.other-due-row span{min-width:0}.other-due-row small{display:block;color:var(--muted);font-size:10.5px;margin-top:3px}.other-due-row>strong{white-space:nowrap}
+@media(max-width:760px){
+  .top-actions #yearSelect{display:none}
+  .bills-month-head{margin-top:-4px;margin-bottom:12px}.bills-month-head strong{font-size:20px}.month-arrow{width:40px;height:40px}
+  .bill-month-tabs{margin-bottom:12px}.bill-month-tabs button{font-size:12px;padding:9px 5px}
+  .bill-month-kpis{grid-template-columns:1.15fr 1fr 1fr;gap:7px}.month-kpi{padding:13px 11px;min-height:96px;border-radius:17px}.month-kpi>span{font-size:9px}.month-kpi>strong{font-size:19px;margin-top:8px}.month-kpi>small{font-size:9.5px}
+  .bills-month-section{padding:13px;border-radius:20px}.bills-search-row{grid-template-columns:minmax(0,1fr) 82px}.new-bill-btn{min-width:0;padding-left:8px;padding-right:8px}
+  .bills-sort-row{display:grid;grid-template-columns:1fr auto}.bills-sort-row select{width:100%;min-width:0}.bills-sort-row button{white-space:nowrap}
+  .monthly-bill-card{grid-template-columns:40px minmax(0,1fr) auto;padding:12px 11px;gap:9px;border-radius:16px}.monthly-bill-icon{width:39px;height:39px;border-radius:12px}.monthly-bill-side>strong{font-size:16px}.monthly-bill-actions{grid-column:1/4}.monthly-bill-actions .mini{min-height:36px}
+  .other-due-head{padding:15px 14px}.other-due-total strong{font-size:14px}
+}
+
+
+/* --- V8.1 Bollette mobile: stile Casa+ verde, compatto e app-like --- */
+.modal-spacer{flex:1}
+@media(max-width:760px){
+  body[data-page="bollette"]{--accent:#28c76f;--accent-soft:#eaf9f0;background:#f7f9f8}
+  body[data-page="bollette"] main{padding-left:16px;padding-right:16px;background:#f7f9f8}
+  body[data-page="bollette"] .top{position:relative;top:auto;margin:-18px -16px 10px;padding:calc(14px + env(safe-area-inset-top)) 16px 8px;background:#f7f9f8;border-bottom:0;backdrop-filter:none;-webkit-backdrop-filter:none}
+  body[data-page="bollette"] .top h1{font-size:30px;font-weight:800;letter-spacing:-.045em}
+  body[data-page="bollette"] .top .muted{font-size:12px;color:#9a9ca0;margin-top:3px}
+  body[data-page="bollette"] .top-actions{display:none}
+
+  body[data-page="bollette"] .bills-month-head{grid-template-columns:34px 1fr 34px;gap:8px;margin:2px 0 12px;max-width:none;background:#fff;border:1px solid #edf0ee;border-radius:18px;padding:9px 10px;box-shadow:0 7px 24px rgba(34,80,54,.045)}
+  body[data-page="bollette"] .bills-month-head strong{font-size:18px;font-weight:780;letter-spacing:-.03em}
+  body[data-page="bollette"] .month-kicker{display:none}
+  body[data-page="bollette"] .month-arrow{width:32px;height:32px;border:0;background:#effaf3;color:#25b966;font-size:26px;box-shadow:none}
+
+  body[data-page="bollette"] .bill-month-tabs{gap:3px;margin:0 0 12px;padding:4px;background:#edf1ef;border-radius:16px;max-width:none}
+  body[data-page="bollette"] .bill-month-tabs button{padding:9px 4px;border-radius:13px;font-size:12px;font-weight:720}
+  body[data-page="bollette"] .bill-month-tabs button.active{background:#fff;color:#1f2421;box-shadow:0 3px 10px rgba(30,70,45,.07)}
+  body[data-page="bollette"] .bill-month-tabs button.active:first-child{color:#20a95b}
+  body[data-page="bollette"] .bill-month-tabs button span{background:#e3e8e5;color:#737975}
+  body[data-page="bollette"] .bill-month-tabs button.active span{background:#e8f8ee;color:#20a95b}
+
+  body[data-page="bollette"] .bill-month-kpis{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:13px}
+  body[data-page="bollette"] .month-kpi{min-height:88px;padding:12px 10px;border-radius:18px;border:1px solid #edf0ee;box-shadow:0 7px 22px rgba(30,70,45,.04);backdrop-filter:none;-webkit-backdrop-filter:none}
+  body[data-page="bollette"] .month-kpi:first-child{background:linear-gradient(145deg,#f0fbf4,#fff)}
+  body[data-page="bollette"] .month-kpi.due{background:linear-gradient(145deg,#fff5f3,#fff)}
+  body[data-page="bollette"] .month-kpi.paid{background:linear-gradient(145deg,#eef8ff,#fff)}
+  body[data-page="bollette"] .month-kpi>span{font-size:8.5px;letter-spacing:.035em;color:#8b908d}
+  body[data-page="bollette"] .month-kpi>strong{font-size:18px;margin-top:7px;color:#202522}
+  body[data-page="bollette"] .month-kpi>small{font-size:9px;margin-top:3px;color:#9a9e9b}
+
+  body[data-page="bollette"] .bills-month-section{padding:0;background:transparent;border:0;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none}
+  body[data-page="bollette"] .bills-search-row{display:block;margin:0 0 8px}
+  body[data-page="bollette"] .bills-search-row input{min-height:43px;border:1px solid #e7ebe8;border-radius:15px;background:#fff;padding-left:15px;box-shadow:0 5px 18px rgba(30,70,45,.035)}
+  body[data-page="bollette"] .bills-sort-row{display:grid;grid-template-columns:minmax(0,1fr) 44px;gap:7px;margin:0 0 13px}
+  body[data-page="bollette"] .bills-sort-row select,body[data-page="bollette"] .bills-sort-row button{min-height:38px;border:1px solid #e7ebe8;border-radius:13px;background:#fff;font-size:12px;color:#676d69;box-shadow:none}
+  body[data-page="bollette"] .bills-sort-row select{width:100%;padding:7px 11px}
+  body[data-page="bollette"] .bills-sort-row button{padding:0;font-size:18px}
+
+  body[data-page="bollette"] .bill-group-head{margin:15px 2px 8px;justify-content:space-between}
+  body[data-page="bollette"] .bill-group-head:first-child{margin-top:4px}
+  body[data-page="bollette"] .bill-group-head h2{font-size:15px;font-weight:780}
+  body[data-page="bollette"] .bill-group-head span{min-width:21px;height:21px;font-size:10px}
+  body[data-page="bollette"] .monthly-bill-list{gap:7px}
+  body[data-page="bollette"] .monthly-bill-card{grid-template-columns:42px minmax(0,1fr) auto;gap:10px;padding:11px 12px;border:1px solid #edf0ee;border-radius:17px;background:#fff;box-shadow:0 5px 18px rgba(30,70,45,.035)}
+  body[data-page="bollette"] .monthly-bill-icon{width:42px;height:42px;border-radius:13px;background:#effaf3;color:#20b660;font-size:19px}
+  body[data-page="bollette"] .monthly-bill-title{font-size:14px;font-weight:780;color:#202522}
+  body[data-page="bollette"] .monthly-bill-meta{font-size:10.5px;margin-top:2px;color:#8e938f}
+  body[data-page="bollette"] .monthly-bill-main>small{font-size:9.5px;margin-top:2px;color:#a0a4a1}
+  body[data-page="bollette"] .monthly-bill-side{position:relative;padding-right:12px;display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+  body[data-page="bollette"] .monthly-bill-side>strong{font-size:15.5px;margin:0;color:#202522}
+  body[data-page="bollette"] .bill-status-pill{display:inline-flex;align-items:center;padding:3px 7px;border-radius:999px;font-size:8.5px;font-weight:760}
+  body[data-page="bollette"] .due-pill{background:#fff2d8;color:#9a6814}.paid-pill{background:#e9f8ef;color:#208b52}.overdue-pill{background:#fff0f0;color:#c74444}
+  body[data-page="bollette"] .bill-chevron{position:absolute;right:-3px;top:50%;transform:translateY(-50%);color:#c8ceca;font-size:20px;font-weight:300}
+  body[data-page="bollette"] .monthly-bill-actions{display:none}
+
+  body[data-page="bollette"] .other-due-card{margin-top:12px;border:1px solid #edf0ee;border-radius:17px;box-shadow:0 5px 18px rgba(30,70,45,.035)}
+  body[data-page="bollette"] .other-due-head{padding:13px 14px}
+  body[data-page="bollette"] .other-due-head b{font-size:13px}.other-due-head small{font-size:9.5px}
+  body[data-page="bollette"] .other-due-total strong{font-size:13px;color:#202522}
+
+  body[data-page="bollette"] .sidebar{background:rgba(255,255,255,.95);border-top:1px solid #e8ece9}
+  body[data-page="bollette"] nav button.active{color:#27bd69}
+  body[data-page="bollette"] nav button.active .nav-icon{color:#27bd69}
+  body[data-page="bollette"] nav button.add-nav{color:#27bd69}
+  body[data-page="bollette"] nav button.add-nav .nav-icon{background:#28c76f;box-shadow:0 6px 16px rgba(40,199,111,.28)}
+}
+
+/* --- V8.2 Identità Casa+: blu petrolio, riepilogo unico, liste compatte --- */
+:root{--casa-petrol:#176b87;--casa-petrol-dark:#11556c;--casa-sky:#eaf4f7;--casa-ink:#17252c;--casa-warm:#f7f8f7}
+.modal-spacer{flex:1}
+.quick-add-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.quick-add-grid button{border:1px solid #e7ecee;background:#fff;border-radius:18px;padding:15px;text-align:left;color:var(--text);display:grid;grid-template-columns:42px 1fr;column-gap:11px;align-items:center}
+.quick-add-grid button b{font-size:14px}.quick-add-grid button small{grid-column:2;color:var(--muted);font-size:10.5px;margin-top:2px;line-height:1.35}
+.quick-icon{grid-row:1/3;width:42px;height:42px;border-radius:13px;display:grid;place-items:center;font-size:18px;background:#eaf4f7;color:#176b87}
+.qi-reading{background:#edf5ff;color:#3478bd}.qi-job{background:#f5efff;color:#7a55b5}.qi-tariff{background:#eef8f0;color:#3c8b58}
+.quick-add-handle{display:none}
+
+@media(max-width:760px){
+  body[data-page="bollette"]{--accent:#176b87;--accent-soft:#eaf4f7;background:#f7f8f7;color:#17252c}
+  body[data-page="bollette"] main{padding-left:16px;padding-right:16px;background:#f7f8f7}
+  body[data-page="bollette"] .top{position:relative;top:auto;margin:-18px -16px 6px;padding:calc(14px + env(safe-area-inset-top)) 16px 7px;background:#f7f8f7;border-bottom:0;backdrop-filter:none;-webkit-backdrop-filter:none}
+  body[data-page="bollette"] .top h1{font-size:29px;font-weight:800;letter-spacing:-.045em;color:#17252c}
+  body[data-page="bollette"] .top .muted{font-size:11px;color:#879298;margin-top:3px}
+  body[data-page="bollette"] .top-actions{display:none}
+
+  body[data-page="bollette"] .bills-overview{margin:4px 0 12px;padding:14px 15px 13px;border-radius:24px;background:linear-gradient(145deg,#f0f7f9 0%,#ffffff 58%,#f7fbfc 100%);border:1px solid #e2ecef;box-shadow:0 10px 28px rgba(23,107,135,.075)}
+  body[data-page="bollette"] .bills-period-row{display:grid;grid-template-columns:34px 1fr 34px;align-items:center;gap:8px;margin-bottom:12px}
+  body[data-page="bollette"] .bills-period{text-align:center;line-height:1.15}
+  body[data-page="bollette"] .bills-period span{display:block;font-size:9px;font-weight:780;letter-spacing:.11em;text-transform:uppercase;color:#829198;margin-bottom:3px}
+  body[data-page="bollette"] .bills-period strong{font-size:17px;font-weight:790;letter-spacing:-.025em;color:#17252c}
+  body[data-page="bollette"] .month-arrow{width:32px;height:32px;border:0;background:rgba(23,107,135,.09);color:#176b87;border-radius:11px;font-size:24px;box-shadow:none}
+  body[data-page="bollette"] .bills-total-label{text-align:center;color:#78868c;font-size:10.5px;font-weight:650}
+  body[data-page="bollette"] .bills-total-value{text-align:center;font-size:35px;font-weight:820;letter-spacing:-.055em;color:#17252c;margin:2px 0 13px}
+  body[data-page="bollette"] .bills-split{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:11px}
+  body[data-page="bollette"] .bills-split>div{display:grid;grid-template-columns:8px 1fr auto;align-items:center;gap:6px;background:rgba(255,255,255,.72);border:1px solid #e7edef;border-radius:13px;padding:9px 10px}
+  body[data-page="bollette"] .bills-split small{font-size:9.5px;color:#7d898e}
+  body[data-page="bollette"] .bills-split strong{font-size:12px;color:#26363d;white-space:nowrap}
+  body[data-page="bollette"] .split-dot{width:7px;height:7px;border-radius:50%}.paid-dot{background:#3b9b72}.due-dot{background:#d69a45}
+  body[data-page="bollette"] .bills-progress{height:7px;background:#e6edef;border-radius:999px;overflow:hidden}
+  body[data-page="bollette"] .bills-progress span{display:block;height:100%;background:linear-gradient(90deg,#2f879f,#176b87);border-radius:999px;transition:width .2s ease}
+  body[data-page="bollette"] .bills-progress-note{display:flex;justify-content:space-between;margin-top:5px;color:#8b969a;font-size:8.5px;font-weight:650}
+
+  body[data-page="bollette"] .bill-month-tabs{display:flex;gap:7px;margin:0 0 12px;padding:0;background:transparent;max-width:none;overflow:auto;scrollbar-width:none}
+  body[data-page="bollette"] .bill-month-tabs::-webkit-scrollbar{display:none}
+  body[data-page="bollette"] .bill-month-tabs button{flex:0 0 auto;padding:8px 11px;border-radius:999px;border:1px solid #dfe7e9;background:#fff;color:#68767c;font-size:11px;font-weight:720;box-shadow:none}
+  body[data-page="bollette"] .bill-month-tabs button.active{background:#176b87;border-color:#176b87;color:#fff;box-shadow:0 5px 13px rgba(23,107,135,.16)}
+  body[data-page="bollette"] .bill-month-tabs button span{min-width:18px;height:18px;margin-left:3px;background:#edf1f2;color:#68767c;font-size:9px}
+  body[data-page="bollette"] .bill-month-tabs button.active span{background:rgba(255,255,255,.18);color:#fff}
+
+  body[data-page="bollette"] .bills-tools{display:grid;grid-template-columns:minmax(0,1fr) 112px;gap:7px;margin-bottom:14px}
+  body[data-page="bollette"] .bills-search-row{position:relative;display:block;margin:0}
+  body[data-page="bollette"] .search-glyph{position:absolute;left:12px;top:50%;transform:translateY(-50%);z-index:1;color:#8a969b;font-size:18px;pointer-events:none}
+  body[data-page="bollette"] .bills-search-row input{height:40px;min-height:40px;border:1px solid #e1e8ea;border-radius:13px;background:#fff;padding:0 10px 0 34px;font-size:12px;box-shadow:none}
+  body[data-page="bollette"] .bills-sort-row{display:grid;grid-template-columns:minmax(0,1fr) 35px;gap:5px;margin:0}
+  body[data-page="bollette"] .bills-sort-row select,body[data-page="bollette"] .bills-sort-row button{height:40px;min-height:40px;border:1px solid #e1e8ea;border-radius:13px;background:#fff;color:#66757b;font-size:10.5px;box-shadow:none}
+  body[data-page="bollette"] .bills-sort-row select{width:100%;min-width:0;padding:0 7px}
+  body[data-page="bollette"] .bills-sort-row button{padding:0;font-size:16px}
+
+  body[data-page="bollette"] .bill-group-head{margin:18px 2px 8px;display:flex;align-items:flex-end;justify-content:space-between}
+  body[data-page="bollette"] .bill-group-head:first-child{margin-top:2px}
+  body[data-page="bollette"] .group-kicker{font-size:8px;letter-spacing:.10em;font-weight:800;color:#8c979b;margin-bottom:2px}
+  body[data-page="bollette"] .bill-group-head h2{font-size:16px;font-weight:790;letter-spacing:-.02em;color:#17252c;margin:0}
+  body[data-page="bollette"] .bill-group-head span{min-width:23px;height:23px;background:#f5eadb;color:#a66d23;font-size:10px}
+  body[data-page="bollette"] .bill-group-head.paid-head span{background:#e5f2eb;color:#347c5d}
+
+  body[data-page="bollette"] .monthly-bill-list{display:block;background:#fff;border:1px solid #e3e9eb;border-radius:19px;overflow:hidden;box-shadow:0 6px 20px rgba(30,60,70,.035)}
+  body[data-page="bollette"] .monthly-bill-card{display:grid;grid-template-columns:42px minmax(0,1fr) auto;gap:10px;align-items:center;padding:12px 13px;border:0;border-bottom:1px solid #edf1f2;border-radius:0;background:#fff;box-shadow:none}
+  body[data-page="bollette"] .monthly-bill-card:last-child{border-bottom:0}
+  body[data-page="bollette"] .monthly-bill-card:active{background:#f7fafb;transform:none}
+  body[data-page="bollette"] .monthly-bill-icon{width:40px;height:40px;border-radius:12px;font-size:18px;background:#f0f3f4;color:#176b87}
+  body[data-page="bollette"] .monthly-bill-icon.tone-luce,.other-utility-icon.tone-luce{background:#fff3d6;color:#b87918}
+  body[data-page="bollette"] .monthly-bill-icon.tone-gas,.other-utility-icon.tone-gas{background:#ffede4;color:#c76d3c}
+  body[data-page="bollette"] .monthly-bill-icon.tone-acqua,.other-utility-icon.tone-acqua{background:#e6f4fb;color:#337fa7}
+  body[data-page="bollette"] .monthly-bill-icon.tone-fibra,.other-utility-icon.tone-fibra{background:#f0eafd;color:#7657a8}
+  body[data-page="bollette"] .monthly-bill-icon.tone-tari,.other-utility-icon.tone-tari{background:#eaf4ec;color:#4d865d}
+  body[data-page="bollette"] .monthly-bill-icon.tone-altro,.other-utility-icon.tone-altro{background:#edf1f2;color:#68777d}
+  body[data-page="bollette"] .monthly-bill-title{font-size:13.5px;font-weight:780;color:#17252c}
+  body[data-page="bollette"] .monthly-bill-meta{font-size:10px;margin-top:2px;color:#7e8b90}
+  body[data-page="bollette"] .monthly-bill-main>small{font-size:9.5px;margin-top:2px;color:#99a2a6}
+  body[data-page="bollette"] .monthly-bill-side{position:relative;padding-right:12px;display:flex;flex-direction:column;align-items:flex-end;gap:3px}
+  body[data-page="bollette"] .monthly-bill-side>strong{font-size:15px;margin:0;color:#17252c}
+  body[data-page="bollette"] .bill-status-pill{display:inline-flex;align-items:center;padding:3px 6px;border-radius:999px;font-size:8px;font-weight:760}
+  body[data-page="bollette"] .due-pill{background:#f8eddc;color:#a56c23}.paid-pill{background:#e6f3ec;color:#347d5d}.overdue-pill{background:#fbe7e7;color:#b94a4a}
+  body[data-page="bollette"] .bill-chevron{position:absolute;right:-3px;top:50%;transform:translateY(-50%);color:#bdc7ca;font-size:19px;font-weight:300}
+  body[data-page="bollette"] .monthly-bill-actions{display:none}
+  body[data-page="bollette"] .compact-empty{padding:20px 12px;border:1px dashed #dfe6e8;background:transparent;border-radius:16px}
+
+  body[data-page="bollette"] .other-due-card{margin-top:15px;overflow:hidden;background:#fff;border:1px solid #e3e9eb;border-radius:18px;box-shadow:none}
+  body[data-page="bollette"] .other-due-head{padding:13px 14px}
+  body[data-page="bollette"] .other-due-head b{font-size:13px;color:#26363d}.other-due-head small{font-size:9.5px}
+  body[data-page="bollette"] .other-due-total strong{font-size:13px;color:#17252c}
+  body[data-page="bollette"] .other-due-list{padding:0 10px 10px;gap:5px}
+  body[data-page="bollette"] .other-due-row{border:0;border-top:1px solid #edf1f2;border-radius:0;background:#fff;padding:10px 4px}
+  body[data-page="bollette"] .other-due-row span{display:grid;grid-template-columns:30px 1fr;align-items:center;column-gap:8px}
+  body[data-page="bollette"] .other-due-row b,body[data-page="bollette"] .other-due-row small{grid-column:2}
+  .other-utility-icon{grid-row:1/3;width:30px;height:30px;border-radius:9px;display:grid;place-items:center;font-style:normal}
+
+  body[data-page="bollette"] .sidebar{background:rgba(255,255,255,.96);border-top:1px solid #e3e9eb}
+  body[data-page="bollette"] nav button.active{color:#176b87}
+  body[data-page="bollette"] nav button.active .nav-icon{color:#176b87}
+  body[data-page="bollette"] nav button.add-nav{color:#176b87}
+  body[data-page="bollette"] nav button.add-nav .nav-icon{background:#176b87;box-shadow:0 7px 18px rgba(23,107,135,.26)}
+
+  .quick-add-sheet{padding-top:2px}
+  .quick-add-handle{display:block;width:38px;height:4px;border-radius:999px;background:#d7dcde;margin:-7px auto 13px}
+  .quick-add-head{position:static!important;padding:0 0 12px!important;margin-bottom:0!important}
+  .quick-add-grid{grid-template-columns:1fr;gap:7px}
+  .quick-add-grid button{grid-template-columns:42px 1fr;padding:12px 13px;border-radius:16px}
+}
+/* Casa+ V9 · Home */
+.home-hero{background:linear-gradient(145deg,#eaf4f7 0%,#f8fbfc 56%,#fff 100%);border:1px solid #dce9ed;border-radius:28px;padding:24px;box-shadow:0 12px 34px rgba(23,107,135,.08);margin-bottom:16px}.home-hero-top{display:flex;justify-content:space-between;gap:14px;align-items:flex-start}.home-hero-top span{font-size:10px;letter-spacing:.11em;font-weight:800;color:#68818a}.home-hero-top h2{font-size:29px;line-height:1.03;letter-spacing:-.045em;margin:7px 0 22px}.home-settings{border:0;background:rgba(255,255,255,.8);width:40px;height:40px;border-radius:14px;font-size:17px}.home-spend-label{font-size:11px;color:#75888f;font-weight:700}.home-spend{font-size:39px;font-weight:800;letter-spacing:-.055em;margin:3px 0 18px}.home-hero-split{display:grid;grid-template-columns:1fr 1fr;gap:12px}.home-hero-split span{display:grid;gap:3px}.home-hero-split small{font-size:10px;color:#75888f}.home-hero-split b{font-size:16px}.home-progress{height:7px;background:#dce8eb;border-radius:99px;overflow:hidden;margin-top:15px}.home-progress span{display:block;height:100%;background:#176b87;border-radius:99px}.home-progress-note{font-size:9.5px;color:#7e9096;margin-top:6px}.home-section{background:#fff;border:1px solid #edf0f1;border-radius:24px;padding:17px;margin-bottom:13px;box-shadow:0 7px 24px rgba(30,55,65,.035)}.home-section-head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:9px}.home-section-head small{font-size:8.5px;letter-spacing:.11em;font-weight:800;color:#8b989d}.home-section-head h2{font-size:19px;margin:2px 0 0;letter-spacing:-.03em}.home-section-head button{border:0;background:transparent;color:#176b87;font-size:11px;font-weight:750}.home-list{display:grid}.home-row{display:grid;grid-template-columns:42px minmax(0,1fr) auto 10px;gap:10px;align-items:center;border:0;background:#fff;padding:11px 0;border-bottom:1px solid #eff2f3;text-align:left;color:var(--text)}.home-row:last-child{border-bottom:0}.home-row-icon{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;font-style:normal;font-weight:800}.home-row-main{display:grid;gap:3px;min-width:0}.home-row-main b{font-size:14px}.home-row-main small{font-size:10.5px;color:var(--muted)}.home-row>strong{font-size:14px}.home-row>i{font-style:normal;color:#a0a9ac}.tone-job{background:#f0ecfb;color:#7357a8}.home-job-summary{display:grid;grid-template-columns:38px 1fr 10px;gap:10px;align-items:center;width:100%;border:0;background:#f7f8fb;border-radius:16px;padding:11px 12px;margin-top:10px;text-align:left}.home-job-summary>span{font-size:18px}.home-job-summary div{display:grid;gap:2px}.home-job-summary b{font-size:12px}.home-job-summary small{font-size:10px;color:var(--muted)}.home-job-summary i{font-style:normal;color:#a0a9ac}.home-readings{display:grid;grid-template-columns:1fr 1fr;gap:9px}.home-reading{border:1px solid #e9eef0;background:#f9fbfb;border-radius:17px;padding:12px;text-align:left;display:grid;gap:4px}.home-reading span{font-size:11px;font-weight:750}.home-reading strong{font-size:19px}.home-reading small{font-size:9.5px;color:var(--muted)}.home-empty{padding:18px 4px;color:var(--muted);font-size:11px;line-height:1.45}
+@media(max-width:760px){body[data-page="dashboard"] .top{display:none}body[data-page="dashboard"] main{padding-top:calc(12px + env(safe-area-inset-top))}.home-hero{padding:19px 17px;border-radius:25px}.home-hero-top h2{font-size:27px;margin-bottom:20px}.home-spend{font-size:36px}.home-section{padding:15px;border-radius:22px}.home-readings{grid-template-columns:1fr 1fr}}
+
+/* Casa+ V10 · fedele al mockup approvato */
+:root{--casa-blue:#087fce;--casa-blue2:#00a5d9;--casa-ink:#0c1f39;--casa-sub:#52647d;--casa-line:#e7edf4}
+body[data-page="dashboard"],body[data-page="bollette"]{background:linear-gradient(180deg,#f8fbff 0,#f4f8fc 100%);color:var(--casa-ink)}
+.home-brand-head{display:flex;justify-content:space-between;align-items:center;margin:4px 4px 24px}.home-logo{display:flex;align-items:center;gap:10px}.home-logo b{font-size:34px;letter-spacing:-.05em}.house-mark{display:grid;place-items:center;width:48px;height:48px;font-size:38px;line-height:1;color:#123d68}.home-brand-head p{margin:0;color:var(--casa-sub);font-size:14px}.home-gear{border:0;background:transparent;color:#173c66;font-size:29px;padding:8px}.home-welcome{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:0 4px 22px}.home-welcome h2{font-size:20px;margin:0 0 4px;font-weight:500}.home-welcome h2 b{font-weight:800}.home-welcome p{margin:0;color:var(--casa-sub);font-size:14px}.weather-chip{display:flex;align-items:center;gap:9px;background:rgba(255,255,255,.88);border:1px solid #eef2f7;border-radius:17px;padding:9px 12px;box-shadow:0 5px 16px rgba(21,64,100,.04)}.weather-chip>span{font-size:25px}.weather-chip div{display:grid}.weather-chip b{font-size:22px}.weather-chip small{font-size:9px;color:var(--casa-sub);white-space:nowrap}
+.home-blue-card{border-radius:20px;padding:20px 19px 17px;background:linear-gradient(135deg,#087fd0 0%,#008bd2 52%,#04a9d8 100%);color:#fff;box-shadow:0 12px 28px rgba(0,116,190,.18);margin-bottom:24px}.blue-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:28px}.blue-top>b{font-size:13px;letter-spacing:.02em}.blue-top button{border:0;background:transparent;color:#fff;font-size:12px}.blue-body{display:flex;justify-content:space-between;align-items:center;gap:16px}.blue-body>div:first-child{display:grid;gap:9px}.blue-body span{font-size:13px}.blue-body strong{font-size:35px;letter-spacing:-.045em}.progress-ring{--pct:0;width:86px;height:86px;border-radius:50%;background:conic-gradient(#d6f3d9 calc(var(--pct)*1%),rgba(255,255,255,.35) 0);display:grid;place-items:center;position:relative}.progress-ring:before{content:"";position:absolute;inset:9px;border-radius:50%;background:#0789cc}.progress-ring>div{position:relative;display:grid;text-align:center}.progress-ring b{font-size:22px}.progress-ring small{font-size:10px}.blue-split{display:grid;grid-template-columns:1fr 1fr;margin-top:18px}.blue-split>div{display:grid;gap:7px}.blue-split>div+div{border-left:1px solid rgba(255,255,255,.28);padding-left:22px}.blue-split span{font-size:12px}.blue-split b{font-size:16px}.blue-split i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px}.green-dot{background:#4ee26e}.orange-dot{background:#ff982f}
+.home-clean-section{margin:0 0 24px}.clean-head{display:flex;justify-content:space-between;align-items:center;margin:0 3px 9px}.clean-head h2{font-size:20px;letter-spacing:-.035em;margin:0}.clean-head button{border:0;background:transparent;color:#0877ca;font-weight:700;font-size:12px}.boxed-list{background:#fff;border:1px solid #e8eef5;border-radius:16px;padding:0 15px;box-shadow:0 5px 18px rgba(25,66,100,.035)}.home-row{grid-template-columns:40px minmax(0,1fr) auto 10px;padding:12px 0}.home-row-icon{width:38px;height:38px;border-radius:11px;font-size:20px}.home-row-main b{font-size:14px}.home-row-main small{font-size:11px}.home-row>strong{font-size:14px}.consumption-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.consumption-card{border:1px solid #e7edf4;background:#fff;border-radius:15px;padding:13px 11px;text-align:left;box-shadow:0 4px 14px rgba(25,66,100,.035)}.consumption-card>span{display:block;font-size:12px;white-space:nowrap}.consumption-card>strong{display:block;font-size:20px;margin:10px 0 7px}.consumption-card small{font-size:9px;line-height:1.3;color:var(--casa-sub)}.consumption-card .down{color:#169743}.consumption-card .up{color:#ee3939}.consumption-card .neutral{color:#8b97a7}
+
+.bills-page-head{display:flex;justify-content:space-between;align-items:center;margin:4px 2px 25px}.bills-page-head h1{font-size:34px;letter-spacing:-.05em;margin:0}.bills-page-head p{margin:3px 0 0;color:var(--casa-sub);font-size:13px}.bills-search-icon{border:0;background:transparent;font-size:30px;color:#0b2d55}.four-tabs{grid-template-columns:repeat(4,1fr);max-width:none;background:#f0f4f9;border:1px solid #e5ebf2;padding:3px;border-radius:10px;margin-bottom:22px}.four-tabs button{font-size:12px;padding:10px 3px;border-radius:8px;color:#50617a}.four-tabs button.active{background:#167fe3;color:#fff;box-shadow:0 4px 10px rgba(20,112,210,.18)}
+.paid-month-panel,.bills-list-panel{background:#fff;border:1px solid #e7edf4;border-radius:17px;padding:15px;box-shadow:0 6px 20px rgba(25,66,100,.04);margin-bottom:15px}.paid-panel-head,.bills-list-head{display:flex;justify-content:space-between;align-items:center;gap:10px}.paid-panel-head h2,.bills-list-head h2{font-size:18px;margin:0;letter-spacing:-.025em}.paid-panel-head h2 span{font-size:14px}.paid-panel-head select{width:auto;border:0;background:transparent;padding:5px;font-size:12px;color:#17283f;box-shadow:none}.paid-summary{display:flex;align-items:center;gap:16px;background:linear-gradient(110deg,#effcf4,#e8faf3);border-radius:13px;padding:16px;margin:15px 0 8px}.paid-check{display:grid;place-items:center;width:45px;height:45px;border-radius:50%;background:#13a24c;color:#fff;font-size:24px;box-shadow:0 4px 10px rgba(20,160,80,.2)}.paid-summary div{display:grid;gap:3px}.paid-summary b{font-size:13px}.paid-summary small{font-size:11px;color:#23364b}.paid-summary strong{font-size:23px}.paid-feature-list .monthly-bill-card{border:0;border-bottom:1px solid #edf1f5;border-radius:0;box-shadow:none;padding:12px 2px}.paid-feature-list .monthly-bill-card:last-child{border-bottom:0}.bills-list-head button{border:0;background:transparent;color:#0877d1;font-size:22px}.bill-filter-box{display:none;margin:10px 0}.bill-filter-box.open{display:block}.bill-filter-box input{background:#f7f9fc}.bills-list-panel .monthly-bill-list{border:0;border-radius:0;box-shadow:none}.bills-list-panel .monthly-bill-card{border:0;border-bottom:1px solid #edf1f5;border-radius:0;box-shadow:none;padding:12px 2px}.bills-list-panel .monthly-bill-card:last-child{border-bottom:0}.monthly-bill-icon{font-size:22px;background:transparent!important}.monthly-bill-title{font-size:14px}.monthly-bill-meta{font-size:10px}.monthly-bill-main>small{font-size:10px}.monthly-bill-side>strong{font-size:15px}.bill-status-pill{font-size:9px;padding:4px 8px}.paid-pill{background:#dff6e4;color:#16802f}
+
+@media(max-width:760px){
+  body[data-page="dashboard"] .top,body[data-page="bollette"] .top{display:none}
+  body[data-page="dashboard"] main,body[data-page="bollette"] main{padding:calc(14px + env(safe-area-inset-top)) 16px 22px}
+  body[data-page="dashboard"] .sidebar,body[data-page="bollette"] .sidebar{background:rgba(255,255,255,.96);border-top:1px solid #e7edf4}
+  body[data-page="dashboard"] nav button.active,body[data-page="bollette"] nav button.active{color:#087fe1}
+  body[data-page="dashboard"] nav button.active .nav-icon,body[data-page="bollette"] nav button.active .nav-icon{color:#087fe1}
+  body[data-page="dashboard"] nav button.add-nav .nav-icon,body[data-page="bollette"] nav button.add-nav .nav-icon{background:#147fe5;box-shadow:0 7px 18px rgba(20,127,229,.25)}
+  .home-brand-head{margin-top:0}.home-logo b{font-size:31px}.house-mark{width:42px;height:42px;font-size:34px}.home-welcome{margin-bottom:20px}.weather-chip{padding:8px 10px}.home-blue-card{padding:18px 17px 15px}.blue-top{margin-bottom:24px}.blue-body strong{font-size:33px}.progress-ring{width:80px;height:80px}.progress-ring b{font-size:20px}.home-clean-section{margin-bottom:21px}.consumption-grid{gap:7px}.consumption-card{padding:12px 9px}.consumption-card>span{font-size:11px}.consumption-card>strong{font-size:19px}
+  .bills-page-head{margin-bottom:22px}.bills-page-head h1{font-size:33px}.four-tabs{margin-bottom:20px}.paid-month-panel,.bills-list-panel{padding:14px;border-radius:16px}.monthly-bill-card{grid-template-columns:42px minmax(0,1fr) auto}
+}
+.uicon-svg{width:22px;height:22px;display:block}.tone-luce{color:#ffb400}.tone-acqua{color:#2b9df4}.tone-gas{color:#ff6a1a}.tone-fibra{color:#2187ef}.tone-tari{color:#6d7f91}.tone-altro{color:#607387}.home-row-icon .uicon-svg,.monthly-bill-icon .uicon-svg{width:24px;height:24px}.bill-utility .uicon-svg,.utility-bill-main .uicon-svg{display:inline-block;width:18px;height:18px;vertical-align:-4px}
+@media(max-width:760px){.consumption-card{min-width:0}.consumption-card>span{white-space:normal}.consumption-card b{font-size:11px}}
+
+
+/* Casa+ V11 · correzioni Bollette + Home senza meteo */
+.home-welcome{justify-content:flex-start}
+.weather-chip{display:none!important}
+.bill-global-search{display:none;grid-template-columns:minmax(0,1fr) 38px;gap:8px;align-items:center;margin:-9px 0 16px}
+.bill-global-search.open{display:grid}
+.bill-global-search input{width:100%;min-height:44px;border:1px solid #dfe7f0;border-radius:13px;background:#fff;padding:10px 13px;font:inherit;color:var(--casa-ink);box-shadow:0 4px 14px rgba(25,66,100,.035)}
+.bill-global-search input:focus{outline:2px solid rgba(20,127,229,.18);border-color:#8fc5f4}
+.bill-global-search button{width:38px;height:38px;border:0;border-radius:50%;background:#edf4fb;color:#45627f;font-size:22px}
+.bill-list-count{display:grid;place-items:center;min-width:27px;height:27px;padding:0 8px;border-radius:999px;background:#edf4fb;color:#176cae;font-size:11px;font-weight:800}
+.bills-search-icon{cursor:pointer}
+@media(max-width:760px){.home-welcome{margin-bottom:20px}.bill-global-search{margin-top:-7px}.bills-list-panel{margin-top:0}}
+
+
+/* --- V12: riepilogo utenze + ricerca robusta --- */
+.summary-year{font-size:12px;font-weight:750;color:#6f8195}.home-utility-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.home-utility-card{display:grid;grid-template-columns:38px minmax(0,1fr) auto 8px;gap:9px;align-items:center;border:1px solid #e7edf4;background:#fff;border-radius:15px;padding:12px;text-align:left;color:var(--casa-ink);box-shadow:0 4px 14px rgba(25,66,100,.035)}.home-utility-card:active{transform:scale(.99)}.home-utility-icon{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;background:#f4f7fb}.home-utility-card>span:nth-child(2){display:grid;gap:3px;min-width:0}.home-utility-card b{font-size:13px}.home-utility-card small{font-size:9.5px;color:var(--casa-sub)}.home-utility-card strong{font-size:13px;white-space:nowrap}.home-utility-card i{font-style:normal;color:#9aa8b6}.bills-search-icon{width:44px;height:44px;display:grid;place-items:center;border-radius:50%;touch-action:manipulation}.bills-search-icon:active{background:#eaf2fb}.bill-global-search.open{display:grid!important}.bill-list-count{min-width:28px;height:28px;padding:0 8px;border-radius:14px;background:#edf4fb;color:#27678f;display:grid;place-items:center;font-size:12px;font-weight:800}@media(max-width:430px){.home-utility-grid{grid-template-columns:1fr 1fr}.home-utility-card{grid-template-columns:34px minmax(0,1fr) 8px;padding:10px}.home-utility-icon{width:34px;height:34px}.home-utility-card strong{grid-column:2;grid-row:2;font-size:12px}.home-utility-card i{grid-column:3;grid-row:1/3;align-self:center}}
+
+/* Casa+ V15: home senza percentuale, doppio totale mensile/annuale */
+.blue-metrics{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);align-items:end;gap:18px}
+.blue-metric{display:grid;gap:8px;min-width:0}
+.blue-metric strong{font-size:32px;letter-spacing:-.04em;line-height:1.05;white-space:nowrap}
+.blue-metric.annual-metric{padding-left:18px;border-left:1px solid rgba(255,255,255,.28)}
+.blue-metric.annual-metric strong{font-size:25px}
+.blue-metric.annual-metric small{font-size:10px;color:rgba(255,255,255,.78)}
+@media(max-width:390px){.blue-metrics{gap:12px}.blue-metric strong{font-size:28px}.blue-metric.annual-metric{padding-left:12px}.blue-metric.annual-metric strong{font-size:22px}}
+
+.red-dot{background:#ff5a5f}
+
+
+/* Casa+ 2.2 - Lista della spesa */
+.shopping-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:14px}.shopping-head h2{margin:3px 0 4px;font-size:25px}.shopping-head p{margin:0;color:var(--casa-sub)}.shopping-kicker{font-size:10px;font-weight:850;letter-spacing:.12em;color:#1686d9}.shopping-list{padding:4px 14px}.shopping-row{display:grid;grid-template-columns:34px minmax(0,1fr) 34px;align-items:center;gap:10px;padding:13px 0;border-bottom:1px solid #edf1f5}.shopping-row:last-child{border-bottom:0}.shopping-check{width:30px;height:30px;border-radius:50%;border:2px solid #c8d5e2;background:#fff;color:#fff;font-weight:900}.shopping-row.done .shopping-check{background:#28c76f;border-color:#28c76f}.shopping-main{border:0;background:none;text-align:left;display:grid;gap:3px;color:var(--casa-ink);padding:0}.shopping-main b{font-size:15px}.shopping-main small{color:var(--casa-sub)}.shopping-row.done .shopping-main b{text-decoration:line-through;color:#8b98a6}.shopping-delete{border:0;background:#f5f7fa;color:#8b98a6;width:30px;height:30px;border-radius:50%;font-size:19px}.shopping-empty{min-height:190px;display:grid;place-items:center;align-content:center;gap:8px;color:var(--casa-sub);font-size:14px}.shopping-empty:first-letter{font-size:32px}.shopping-bought{margin-top:20px}.shopping-bought .clean-head button{border:0;background:none;color:#e05252}.alexa-card{margin-top:18px;padding:16px;display:grid;grid-template-columns:42px minmax(0,1fr) auto;gap:12px;align-items:center}.alexa-orb{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:#eaf5ff;color:#1686d9;font-size:25px}.alexa-card p{margin:3px 0 0;color:var(--casa-sub);font-size:11px;line-height:1.4}.alexa-status{font-size:10px;font-weight:800;background:#f2f4f7;color:#778596;border-radius:999px;padding:7px 9px}.shopping-home-card{display:grid;grid-template-columns:42px minmax(0,1fr) 12px;gap:12px;align-items:center;cursor:pointer}.shopping-home-icon{width:42px;height:42px;border-radius:13px;background:#eaf5ff;display:grid;place-items:center;font-size:20px}.shopping-home-card .clean-head{margin:0}.shopping-home-card .clean-head span{font-size:10px;color:var(--casa-sub)}.shopping-home-card p{margin:5px 0 0;color:var(--casa-sub);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.shopping-home-card>i{font-style:normal;color:#9aa8b6}@media(max-width:430px){.shopping-head{align-items:flex-start}.shopping-head .primary{padding:10px 12px}.alexa-card{grid-template-columns:38px minmax(0,1fr)}.alexa-status{grid-column:2;justify-self:start}}
+
+
+/* Casa+ 2.3 - Agenda e aggiunta rapida */
+.quick-add-grid.quick-add-two{grid-template-columns:1fr 1fr}
+.qi-event{background:#eef4ff;color:#147fe5}
+.agenda-head{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;margin:4px 0 16px}.agenda-head h1{margin:0;font-size:30px;letter-spacing:-.04em}.agenda-head p{margin:4px 0 0;color:var(--muted)}
+.agenda-weekbar{display:grid;grid-template-columns:44px 1fr 44px;align-items:center;background:#fff;border:1px solid #e8ecef;border-radius:18px;padding:8px;margin-bottom:12px}.agenda-weekbar>button{border:0;background:#f4f6f8;border-radius:12px;height:40px;font-size:25px;color:var(--text)}.agenda-weekbar>div{text-align:center}.agenda-weekbar b{display:block;font-size:14px}.agenda-weekbar small{color:var(--muted)}
+.agenda-days{display:grid;gap:8px}.agenda-day{display:grid;grid-template-columns:78px 1fr;background:#fff;border:1px solid #e8ecef;border-radius:18px;overflow:hidden}.agenda-day.today{border-color:#9ecbf5;box-shadow:0 0 0 1px rgba(20,127,229,.08)}.agenda-date{padding:13px;text-align:center;background:#f8fafb;border-right:1px solid #edf0f2}.agenda-date span{display:block;font-size:10px;font-weight:800;color:var(--muted);letter-spacing:.08em}.agenda-date b{display:block;font-size:25px;line-height:1.05;margin:3px 0}.agenda-date small{font-size:10px;color:var(--muted)}.agenda-day.today .agenda-date b{color:#147fe5}
+.agenda-items{padding:7px;display:grid;gap:6px;align-content:center}.agenda-item{width:100%;border:0;background:#f7f9fa;border-radius:13px;padding:10px;display:grid;grid-template-columns:78px 1fr 14px;gap:8px;align-items:center;text-align:left;color:var(--text)}.agenda-item.bill-event{background:#fff7ed}.agenda-time{font-size:10.5px;color:var(--muted);font-weight:700}.agenda-item b{font-size:13px}.agenda-item small{display:block;color:var(--muted);font-size:10.5px;margin-top:2px}.agenda-item i{font-style:normal;color:#a2a8ad}.agenda-empty{color:#a1a6aa;font-size:12px;padding:11px}
+@media(max-width:700px){.quick-add-grid.quick-add-two{grid-template-columns:1fr}.agenda-head h1{font-size:27px}.agenda-head p{font-size:12px}.agenda-head .primary{padding:10px 12px}.agenda-day{grid-template-columns:64px 1fr}.agenda-date{padding:11px 7px}.agenda-item{grid-template-columns:68px 1fr 12px;padding:9px}.agenda-time{font-size:10px}}
+
+/* Casa+ 2.3.1 - Home interattiva */
+.home-metric-button{position:relative;border:0;background:transparent;color:inherit;font:inherit;text-align:left;padding:0;margin:0;width:100%;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.home-metric-button .metric-chevron{position:absolute;right:0;top:50%;transform:translateY(-50%);font-style:normal;font-size:20px;color:rgba(255,255,255,.82)}
+.blue-metric.home-metric-button{padding-right:18px}
+.blue-metric.annual-metric.home-metric-button{padding-left:18px;padding-right:18px}
+.blue-split .split-metric{display:grid;gap:7px;padding-right:20px}
+.blue-split .split-metric+ .split-metric{border-left:1px solid rgba(255,255,255,.28);padding-left:22px}
+.home-metric-button:active{opacity:.72}
+.home-filter-note{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:10px 0 14px;padding:10px 12px;border-radius:12px;background:var(--soft,#eef7fb);font-size:12px}
+.home-filter-note span{font-weight:700}
+.home-filter-note button{border:0;background:transparent;color:var(--primary,#087fd0);font-weight:700;font-size:12px}
+@media(max-width:390px){.blue-metric.annual-metric.home-metric-button{padding-left:12px}.blue-split .split-metric+ .split-metric{padding-left:16px}}
+
+/* Casa+ 2.4: agenda mensile + manutenzione auto */
+.agenda-view-toggle{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:#eef2f5;border-radius:13px;padding:4px;margin:0 0 12px}.agenda-view-toggle button{border:0;background:transparent;border-radius:10px;padding:9px 12px;font:inherit;font-size:12px;font-weight:750;color:var(--muted)}.agenda-view-toggle button.active{background:#fff;color:var(--text);box-shadow:0 2px 8px rgba(25,50,70,.08)}
+.agenda-monthbar{margin-bottom:10px}.month-calendar{padding:10px;margin-bottom:12px}.month-weekdays{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;padding:3px 0 7px}.month-weekdays span{font-size:9px;font-weight:800;letter-spacing:.04em;color:var(--muted)}.month-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}.month-day{position:relative;min-height:54px;border:0;background:transparent;border-radius:12px;padding:6px 2px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;color:var(--text)}.month-day b{font-size:13px;display:grid;place-items:center;width:27px;height:27px;border-radius:50%}.month-day.outside{opacity:.28}.month-day.today b{background:#147fe5;color:#fff}.month-day.selected{background:#edf5fd}.month-day.selected:not(.today) b{color:#147fe5}.month-dots{display:flex;gap:2px;min-height:5px;margin-top:3px}.month-dots i{width:4px;height:4px;border-radius:50%;background:#70899c}.month-dots i.bill-dot{background:#e89434}.month-day small{font-size:7px;color:var(--muted);margin-top:1px}.agenda-selected{padding:13px}.agenda-selected .agenda-items{padding:5px 0 0}
+.car-head{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;margin:4px 0 16px}.car-head h1{margin:0;font-size:30px;letter-spacing:-.04em}.car-head p{margin:4px 0 0;color:var(--muted)}.car-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:12px}.car-kpis .card{padding:13px;display:grid;gap:4px}.car-kpis small{font-size:10px;color:var(--muted)}.car-kpis strong{font-size:18px}.car-list{overflow:hidden;padding:0}.car-row{width:100%;border:0;border-bottom:1px solid #edf1f3;background:#fff;display:grid;grid-template-columns:42px minmax(0,1fr) auto 10px;gap:10px;align-items:center;text-align:left;padding:13px;color:var(--text)}.car-row:last-child{border-bottom:0}.car-icon{width:40px;height:40px;border-radius:12px;background:#eef4f8;display:grid;place-items:center;font-size:19px}.car-row>span:nth-child(2){display:grid;gap:2px}.car-row b{font-size:13px}.car-row small{font-size:10px;color:var(--muted)}.car-row em{font-size:9px;color:#3578a7;font-style:normal}.car-row>strong{font-size:13px;white-space:nowrap}.car-row>i{font-style:normal;color:#a2adb3;font-size:18px}
+@media(max-width:700px){.month-calendar{padding:8px 5px}.month-day{min-height:49px;padding:4px 1px}.month-day b{font-size:12px;width:25px;height:25px}.car-head h1{font-size:27px}.car-head p{font-size:12px}.car-kpis{grid-template-columns:1fr 1fr}.car-kpis .card:last-child{grid-column:1/-1}.car-row{grid-template-columns:38px minmax(0,1fr) auto 8px;padding:11px}.car-icon{width:36px;height:36px}}
+
+/* ============================================================
+   Casa+ 2.7 — blu moderno + agenda turni
+   Solo grafica: struttura e flussi della 2.4 restano invariati.
+   ============================================================ */
+:root{
+  --bg:#f4f7fb;
+  --card:#ffffff;
+  --text:#10233f;
+  --muted:#6d7f96;
+  --line:#e5edf7;
+  --accent:#1677f2;
+  --accent-soft:#eaf3ff;
+  --good:#10b981;
+  --warn:#ff9f1a;
+  --bad:#ff4d5e;
+  --shadow:0 8px 24px rgba(24,73,125,.07);
+  --casa-blue:#1677f2;
+  --casa-blue2:#08a7d8;
+  --casa-ink:#10233f;
+  --casa-sub:#63758d;
+  --casa-line:#e5edf7;
+}
+html,body{background:#f4f7fb;color:var(--text)}
+.card,.boxed-list,.monthly-bill-list,.agenda-weekbar,.agenda-day,.month-calendar,.agenda-selected,.car-list,.more-item{border-color:#e5edf7;box-shadow:0 7px 22px rgba(24,73,125,.055)}
+.primary{background:linear-gradient(135deg,#1677f2,#079ee4);border-color:#1677f2;box-shadow:0 7px 18px rgba(22,119,242,.20)}
+input:focus,select:focus,textarea:focus{border-color:rgba(22,119,242,.5);box-shadow:0 0 0 4px rgba(22,119,242,.10)}
+
+/* Home: niente logo Casa+, casetta, slogan o ingranaggio. */
+body[data-page="dashboard"]{background:linear-gradient(180deg,#f7faff 0%,#f3f7fc 100%)}
+body[data-page="dashboard"] .home-welcome{margin-top:4px;margin-bottom:18px}
+body[data-page="dashboard"] .home-welcome h2{font-size:25px;font-weight:650;letter-spacing:-.035em;color:#10233f}
+body[data-page="dashboard"] .home-welcome h2 b{font-weight:820}
+body[data-page="dashboard"] .home-welcome p{color:#63758d}
+.home-blue-card{background:linear-gradient(135deg,#1677f2 0%,#0a8fe7 54%,#08a7d8 100%);border-radius:24px;box-shadow:0 13px 30px rgba(20,118,224,.20)}
+.blue-top button{font-weight:700}.home-metric-button .metric-chevron{color:rgba(255,255,255,.9)}
+.clean-head h2{color:#10233f}.clean-head button{color:#1677f2}
+.home-utility-card,.consumption-card,.shopping-home-card,.boxed-list{background:#fff;border-color:#e5edf7}
+.home-utility-card{border-radius:18px;box-shadow:0 5px 16px rgba(24,73,125,.045)}
+.home-utility-icon,.home-row-icon{background:#f2f6fb}
+
+/* Icone utenze: lineari, leggibili e con fondi pastello. */
+.uicon-svg{width:22px;height:22px;stroke-width:1.9}
+.tone-luce{color:#f5a800!important;background:#fff4d8!important}
+.tone-acqua{color:#2588e8!important;background:#e9f4ff!important}
+.tone-gas{color:#ff6b35!important;background:#fff0e9!important}
+.tone-fibra{color:#6f56d9!important;background:#f0edff!important}
+.tone-tari{color:#1b9b72!important;background:#e8f7f1!important}
+.tone-altro{color:#6f8195!important;background:#eef3f8!important}
+
+/* Barra inferiore coerente con il mockup blu. */
+@media(max-width:760px){
+  .sidebar{background:rgba(255,255,255,.97)!important;border-top:1px solid #e3ebf5!important;box-shadow:0 -8px 24px rgba(28,69,112,.05)}
+  nav button.active,nav button.active .nav-icon{color:#1677f2!important}
+  nav button.add-nav .nav-icon{background:linear-gradient(145deg,#2387ff,#0877ea)!important;color:#fff!important;box-shadow:0 7px 18px rgba(22,119,242,.28)!important}
+}
+
+/* Bollette */
+body[data-page="bollette"]{background:#f5f8fc;color:#10233f}
+body[data-page="bollette"] .four-tabs{background:#edf3fa;border-color:#e2eaf4}
+body[data-page="bollette"] .four-tabs button.active{background:#1677f2;box-shadow:0 4px 12px rgba(22,119,242,.22)}
+body[data-page="bollette"] .bill-month-tabs button.active{background:#1677f2;border-color:#1677f2;box-shadow:0 5px 13px rgba(22,119,242,.18)}
+body[data-page="bollette"] .bills-progress span{background:linear-gradient(90deg,#1677f2,#08a7d8)}
+body[data-page="bollette"] .monthly-bill-list{border-color:#e4ecf6;box-shadow:0 7px 22px rgba(24,73,125,.05)}
+body[data-page="bollette"] .monthly-bill-card{border-color:#edf2f8}
+
+/* Agenda: mensile di default + indicatori molto più visibili. */
+body[data-page="agenda"]{background:#f5f8fc}
+.agenda-view-toggle{background:#eaf0f7;border-radius:15px}
+.agenda-view-toggle button.active{background:#1677f2;color:#fff;box-shadow:0 4px 12px rgba(22,119,242,.20)}
+.agenda-weekbar{background:#fff;border-color:#e4ecf6;border-radius:18px}
+.agenda-weekbar>button{background:#eef5ff;color:#1677f2}
+.month-calendar{background:#fff;border:1px solid #e4ecf6;border-radius:20px}
+.month-day{min-height:58px}
+.month-day b{width:30px;height:30px;font-size:13px}
+.month-day.today b{background:#1677f2;box-shadow:0 5px 12px rgba(22,119,242,.24)}
+.month-day.selected{background:#edf5ff}
+.month-day.selected:not(.today) b{color:#1677f2}
+.month-dots{gap:4px;min-height:10px;margin-top:4px}
+.month-dots i{width:7px;height:7px;border-radius:50%;background:#10b981;box-shadow:0 0 0 2px #fff,0 1px 4px rgba(15,57,96,.18)}
+.month-dots i.event-dot{background:#10b981}
+.month-dots i.bill-dot{background:#ff5b61}
+.agenda-item{background:#eef6ff;border-left:3px solid #3c91f3}
+.agenda-item.bill-event{background:#fff0f0;border-left-color:#ff5b61}
+
+/* Spesa */
+body[data-page="spesa"]{background:#f5f8fc}
+.shopping-kicker{color:#1677f2}.shopping-check{border-color:#cbd8e7}.shopping-row.done .shopping-check{background:#10b981;border-color:#10b981}
+.shopping-home-icon,.alexa-orb{background:#eaf3ff;color:#1677f2}
+
+/* Manutenzione auto */
+body[data-page="auto"]{background:#f5f8fc}
+.car-kpis .card{background:#fff;border-color:#e4ecf6;border-radius:18px}
+.car-icon{background:#eaf3ff;color:#1677f2;border-radius:13px}
+.car-row{border-color:#edf2f8}.car-row em{color:#1677f2}
+
+/* Altro */
+body[data-page="altro"]{background:#f5f8fc}
+.more-item{background:#fff;border-color:#e4ecf6;border-radius:18px}
+.more-icon{background:#eaf3ff;color:#1677f2}
+
+@media(max-width:430px){
+  body[data-page="dashboard"] .home-welcome h2{font-size:23px}
+  .home-blue-card{border-radius:22px}
+  .month-day{min-height:54px}
+  .month-dots i{width:7px;height:7px}
+}
+
+/* Casa+ 2.7 — riepilogo per anno, agenda turni e indicatori semplificati */
+.summary-year-select{
+  width:auto;min-width:82px;height:34px;padding:0 28px 0 11px;border:1px solid #dce7f3;
+  border-radius:11px;background:#f5f9ff;color:#1677f2;font:inherit;font-size:12px;font-weight:800;
+}
+.agenda-head-actions{display:flex;gap:8px;align-items:center}.agenda-turn-btn{border-color:#dce8f6;color:#1677f2;background:#fff}
+.month-day{min-height:66px;padding:5px 1px}.month-markers{display:flex;align-items:center;justify-content:center;gap:4px;min-height:15px;margin-top:2px}
+.month-markers .event-dot,.event-list-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#ef4444;box-shadow:0 0 0 2px #fff}
+.bill-badge,.agenda-bill-badge{display:inline-grid;place-items:center;background:#1677f2!important;color:#fff!important;border-radius:5px;font-style:normal;font-weight:900;line-height:1;box-shadow:none!important}
+.bill-badge{width:15px!important;height:15px!important;font-size:9px}.agenda-bill-badge{width:28px;height:28px;justify-self:start;font-size:13px}
+.agenda-item b .event-list-dot{margin-right:7px;vertical-align:1px}
+.month-shift{display:block;width:calc(100% - 2px);max-width:48px;overflow:hidden;text-overflow:clip;white-space:nowrap;border-radius:5px;padding:3px 1px;margin-top:2px;font-size:7.5px;line-height:1;font-weight:850;text-align:center;color:#fff}
+.shift-mattina{background:#56b7e9!important;color:#fff!important}.shift-pomeriggio{background:#f2a544!important;color:#fff!important}.shift-notte{background:#3d49aa!important;color:#fff!important}.shift-libero{background:#70c966!important;color:#fff!important}.shift-cturno{background:#f4df59!important;color:#5e5620!important}
+.agenda-item.shift-event{border-left-width:4px}.agenda-item.shift-mattina{background:#eaf7fd;border-left-color:#56b7e9}.agenda-item.shift-pomeriggio{background:#fff4e5;border-left-color:#f2a544}.agenda-item.shift-notte{background:#eeeeff;border-left-color:#3d49aa}.agenda-item.shift-libero{background:#eef9ec;border-left-color:#70c966}.agenda-item.shift-cturno{background:#fffbe4;border-left-color:#e4cb35}
+@media(max-width:430px){.agenda-head{align-items:flex-start}.agenda-head-actions{gap:6px}.agenda-head-actions button{padding:9px 10px;font-size:11px}.month-day{min-height:64px}.month-shift{font-size:7px;max-width:44px}.summary-year-select{height:32px;min-width:78px}}
+
+/* Casa+ 2.7.4: campi letture realmente differenziati per utenza */
+.reading-dynamic-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}.reading-dynamic-fields .span2{grid-column:1/-1}@media(max-width:760px){.reading-dynamic-fields{grid-template-columns:1fr}}
+
+
+/* Casa+ 2.7.8: stessa vista letture a schede su desktop e smartphone */
+.readings-desktop-table{display:none!important}
+.readings-mobile-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.reading-select-hint{grid-column:1/-1;padding:12px 14px;border:1px dashed #d7e3ef;border-radius:12px;background:#f7faff;color:#718297;font-size:12px}
+.readings-empty{padding:30px 12px;text-align:center;color:var(--muted)}
+.readings-section{overflow:hidden}
+.reading-mobile-card{border:1px solid #e4ecf6;background:#fff;border-radius:17px;padding:14px;box-shadow:0 4px 14px rgba(24,73,125,.035);min-width:0}
+.reading-mobile-top{display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:10px;align-items:center}
+.reading-mobile-icon{width:40px;height:40px;border-radius:12px;display:grid;place-items:center}
+.reading-mobile-top>div:nth-child(2){display:grid;gap:2px;min-width:0}
+.reading-mobile-top>div:nth-child(2)>b{font-size:14px;color:var(--casa-ink)}
+.reading-mobile-top>div:nth-child(2)>small{font-size:10.5px;color:var(--casa-sub)}
+.reading-mobile-actions{display:flex;gap:4px}
+.reading-mobile-actions .mini{width:30px;height:30px;padding:0}
+.reading-mobile-period{display:grid;gap:2px;margin-top:10px;padding:9px 10px;background:#f6f9fc;border-radius:11px;min-width:0}
+.reading-mobile-period small,.reading-mobile-values small{font-size:9.5px;text-transform:uppercase;letter-spacing:.045em;color:#8290a0;font-weight:750}
+.reading-mobile-period b{font-size:11.5px;line-height:1.35;white-space:normal;color:#31465d}
+.reading-mobile-values{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:8px}
+.reading-mobile-values>span{display:grid;gap:2px;padding:8px 10px;border:1px solid #edf2f7;border-radius:11px;min-width:0}
+.reading-mobile-values b{font-size:13px;color:#17324f;white-space:normal;overflow-wrap:anywhere}
+.reading-mobile-values>span:only-child{grid-column:1/-1}
+.reading-mobile-note{margin:8px 2px 0;color:#68798b;font-size:11px;line-height:1.4;overflow-wrap:anywhere}
+@media(max-width:760px){
+  body[data-page="letture"] .content{overflow-x:hidden}
+  .readings-section{padding:14px!important}
+  .readings-head{margin-bottom:12px}
+  .readings-head p{font-size:11px;line-height:1.45}
+  .readings-mobile-list{grid-template-columns:1fr;gap:10px}
+  .reading-mobile-card{padding:12px}
+  .reading-mobile-top{grid-template-columns:38px minmax(0,1fr) auto;gap:9px}
+  .reading-mobile-icon{width:38px;height:38px}
+}
+
+
+/* Casa+ 2.7.12 - filtro utenze letture */
+.reading-filter-bar{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 18px}
+.reading-filter-chip{border:1px solid #d7e1ef;background:#fff;color:#36516f;border-radius:999px;padding:8px 14px;font:inherit;font-weight:700;cursor:pointer;transition:.15s ease}
+.reading-filter-chip:hover{background:#f4f8fd}
+.reading-filter-chip.active{background:#1769e0;color:#fff;border-color:#1769e0;box-shadow:0 4px 12px rgba(23,105,224,.16)}
+@media(max-width:640px){.reading-filter-bar{flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}.reading-filter-bar::-webkit-scrollbar{display:none}.reading-filter-chip{flex:0 0 auto;padding:8px 13px}}
+
+/* Casa+ 2.7.13 - Agenda mensile più grande, ispirata alla griglia del riferimento */
+body[data-page="agenda"] .month-calendar{overflow:hidden}
+body[data-page="agenda"] .month-grid{gap:1px}
+body[data-page="agenda"] .month-day{min-height:84px;justify-content:flex-start;padding:8px 3px;border-radius:10px}
+body[data-page="agenda"] .month-day b{font-size:15px;width:31px;height:31px}
+body[data-page="agenda"] .month-shift{max-width:none;width:calc(100% - 2px);padding:5px 2px;font-size:9px;border-radius:6px}
+body[data-page="agenda"] .month-markers{min-height:17px;margin-top:4px}
+@media(max-width:760px){
+  body[data-page="agenda"] main{padding-left:10px;padding-right:10px}
+  body[data-page="agenda"] .top{margin-left:-10px;margin-right:-10px;padding-left:14px;padding-right:14px}
+  body[data-page="agenda"] .month-calendar{padding:8px 4px;border-radius:18px}
+  body[data-page="agenda"] .month-weekdays{padding:5px 0 9px}
+  body[data-page="agenda"] .month-weekdays span{font-size:10px}
+  body[data-page="agenda"] .month-grid{gap:1px}
+  body[data-page="agenda"] .month-day{min-height:92px;padding:8px 2px;border-radius:8px}
+  body[data-page="agenda"] .month-day b{font-size:16px;width:31px;height:31px}
+  body[data-page="agenda"] .month-shift{width:100%;max-width:none;padding:5px 1px;font-size:9.5px;line-height:1.05;border-radius:5px}
+  body[data-page="agenda"] .month-markers{gap:4px;min-height:18px;margin-top:4px}
+}
+@media(max-width:390px){
+  body[data-page="agenda"] .month-day{min-height:88px}
+  body[data-page="agenda"] .month-shift{font-size:8.7px}
+}
+
+
+/* Casa+ 2.7.17 - Home originale + rifiniture navigazione, spesa e auto */
+.legacy-home-photo{position:relative;width:100%;height:180px;margin:0 0 18px;overflow:hidden;border-radius:24px;background:#ddecf7;box-shadow:0 9px 25px rgba(31,72,111,.08)}
+.legacy-home-photo:after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:42px;background:linear-gradient(180deg,rgba(248,251,255,0),rgba(248,251,255,.94) 94%);pointer-events:none}
+.legacy-home-photo img{display:block;width:100%;height:100%;object-fit:cover;object-position:center}
+@media(max-width:760px){.legacy-home-photo{height:154px;margin-top:0;margin-bottom:15px;border-radius:22px}}
+@media(max-width:430px){body[data-page="dashboard"] main{padding-top:calc(12px + env(safe-area-inset-top))}.legacy-home-photo{height:145px;border-radius:20px}}
+\n\n/* Casa+ 2.7.17 - navigazione mobile e rifiniture pagine */
+.nav-line-icon svg,.shopping-empty-icon svg{width:22px;height:22px;display:block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.shopping-empty-icon{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:#eef5ff;color:#1677f2;margin-bottom:2px}
+.shopping-empty:first-letter{font-size:inherit}
+.shopping-head{padding:15px 16px}
+.shopping-head>div{display:flex;align-items:center}.shopping-head p{font-size:13px}
+.car-head>div{min-width:0}.car-head p{margin:0;color:var(--muted)}
+.car-kpis{grid-template-columns:repeat(4,1fr)}
+@media(max-width:760px){
+  nav{grid-template-columns:repeat(7,1fr);gap:0}
+  nav button{height:56px;padding:3px 0;font-size:8.5px;gap:1px}
+  nav button .nav-icon{font-size:19px;line-height:21px}
+  nav button .nav-line-icon svg{width:20px;height:20px}
+  nav button.add-nav .nav-icon{width:34px;height:34px;font-size:25px;margin-top:-7px;box-shadow:0 4px 12px rgba(22,119,242,.24)}
+  nav button.add-nav span:last-child{margin-top:0}
+  .car-kpis{grid-template-columns:1fr 1fr;gap:8px}
+  .car-head{align-items:center;margin-top:0}.car-head p{font-size:11px;line-height:1.35}
+  .shopping-head{align-items:center}.shopping-head p{font-size:12px}
+}
+
+
+/* Casa+ 2.7.17 - icone barra inferiore */
+.nav-modern-icon{display:grid!important;place-items:center;width:27px!important;height:27px!important;border-radius:9px;transition:transform .16s ease,background .16s ease,color .16s ease}
+.nav-modern-icon svg{width:18px;height:18px;display:block;fill:none;stroke:currentColor;stroke-width:1.65;stroke-linecap:round;stroke-linejoin:round}
+.nav-home-icon{color:#2784e8!important;background:#edf6ff}
+.nav-bills-icon{color:#2385a5!important;background:#edf8fb}
+.nav-agenda-icon{color:#7257d7!important;background:#f3f0ff}
+.nav-auto-icon{color:#3d6fb6!important;background:#eef4fc}
+.nav-shop-icon{color:#2d9b68!important;background:#edf9f3}
+.nav-more-icon{color:#718096!important;background:#f1f4f7}
+nav button.active .nav-modern-icon{transform:translateY(-1px);box-shadow:0 3px 8px rgba(27,74,118,.10)}
+nav button[data-page="dashboard"].active{color:#2784e8!important}
+nav button[data-page="bollette"].active{color:#2385a5!important}
+nav button[data-page="agenda"].active{color:#7257d7!important}
+nav button[data-page="auto"].active{color:#3d6fb6!important}
+nav button[data-page="spesa"].active{color:#2d9b68!important}
+nav button[data-page="altro"].active{color:#718096!important}
+@media(max-width:760px){
+  nav button .nav-modern-icon{width:26px!important;height:26px!important;line-height:26px!important}
+  nav button .nav-modern-icon svg{width:17px;height:17px}
+}
+
+
+/* Casa+ 2.7.18 - manutenzioni auto programmate */
+.car-kpi-planned{background:linear-gradient(180deg,#fff,#f7fbff)!important}
+.car-kpi-planned strong{color:#3d6fb6}
+.car-row-planned{background:#fbfdff}
+.car-row-planned .car-icon{font-size:22px;background:#eef4fc;color:#3d6fb6}
+.car-status-badge{display:inline-flex;vertical-align:1px;margin-left:5px;padding:3px 6px;border:0;border-radius:999px;background:#eaf2ff;color:#3d6fb6;font-size:8px;font-weight:850;line-height:1;text-transform:uppercase;letter-spacing:.03em}
+.form-subgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;grid-column:1/-1}
+.form-subgrid.hidden{display:none!important}
+.car-planned-help{grid-column:1/-1;padding:10px 12px;border-radius:12px;background:#f2f7fd;color:#5d7188;font-size:11px;line-height:1.45}
+@media(max-width:700px){.form-subgrid{grid-template-columns:1fr 1fr}.form-subgrid .span2{grid-column:1/-1}.car-row-planned .car-icon{font-size:20px}}
+
+
+/* Casa+ 2.7.19 - chilometri auto mensili */
+.car-kpis{grid-template-columns:repeat(3,1fr)}
+.car-kpi-mileage{font:inherit;color:var(--text);text-align:left;border:1px solid #e4ecf6;cursor:pointer;display:flex!important;align-items:center;justify-content:space-between;gap:10px;width:100%}
+.car-kpi-mileage span{display:grid;gap:4px}.car-kpi-mileage em{font-size:10px;font-style:normal;font-weight:750;color:#1677f2;white-space:nowrap}
+.car-mileage-card{padding:0;margin:0 0 12px;overflow:hidden}
+.car-mileage-head{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:15px 16px 12px;border-bottom:1px solid #edf2f8}
+.car-mileage-head>div:first-child{display:grid;gap:2px}.car-mileage-head small{font-size:9px;color:var(--muted);font-weight:800;letter-spacing:.06em}.car-mileage-head h3{font-size:16px;margin:0;letter-spacing:-.02em}
+.car-mileage-year{display:grid;text-align:right;gap:1px}.car-mileage-year span{font-size:9px;color:var(--muted)}.car-mileage-year strong{font-size:18px;color:#1677f2}
+.car-mileage-list{display:grid}.car-mileage-row{appearance:none;width:100%;border:0;border-bottom:1px solid #edf2f8;background:#fff;color:var(--text);padding:12px 15px;display:grid;grid-template-columns:minmax(0,1fr) auto 10px;align-items:center;gap:12px;text-align:left}
+.car-mileage-row:last-child{border-bottom:0}.car-mileage-row>span:first-child{display:grid;gap:2px}.car-mileage-row b{font-size:13px}.car-mileage-row small{font-size:10px;color:var(--muted)}.car-mileage-row>span:nth-child(2){display:grid;gap:2px;text-align:right}.car-mileage-row>span:nth-child(2) strong{font-size:13px}.car-mileage-row i{font-style:normal;color:#a2adb3;font-size:18px}
+.car-mileage-help{padding:10px 12px;border-radius:12px;background:#f2f7fd;color:#5d7188;font-size:11px;line-height:1.45}
+@media(max-width:700px){.car-kpis{grid-template-columns:1fr 1fr}.car-kpi-mileage{grid-column:1/-1}.car-mileage-head{padding:13px 14px 10px}.car-mileage-row{padding:11px 13px}.car-mileage-year strong{font-size:17px}}
+
+/* Casa+ 2.7.21: accesso Nuova bolletta anche su desktop */
+.bills-head-actions{display:flex;align-items:center;gap:10px}.desktop-new-bill{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}.desktop-new-bill span{font-size:18px;line-height:1}@media(max-width:760px){.desktop-new-bill{display:none}.bills-head-actions{gap:0}}
+
+/* 2.7.22 */
+.bill-utility-filter{display:flex;justify-content:flex-end;margin:-4px 0 12px}.bill-utility-filter label{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:#66706a}.bill-utility-filter select{min-width:150px;border:1px solid #dce5df;background:#fff;border-radius:12px;padding:8px 30px 8px 10px;color:#27312b}.period-free-box{display:grid;grid-template-columns:2fr 1fr;gap:10px;margin-top:10px}.period-free-box label{display:grid;gap:5px;font-size:12px;font-weight:700}.period-free-box input,.period-free-box select{width:100%}@media(max-width:700px){.bill-utility-filter{justify-content:stretch}.bill-utility-filter label{width:100%;justify-content:space-between}.bill-utility-filter select{flex:1}.period-free-box{grid-template-columns:1fr}}
+
+/* 2.7.22 */
+.bill-utility-filter{display:flex;justify-content:flex-end;margin:-4px 0 12px}.bill-utility-filter label{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:#66706a}.bill-utility-filter select{min-width:150px;border:1px solid #dce5df;background:#fff;border-radius:12px;padding:8px 30px 8px 10px;color:#27312b}.period-free-box{display:grid;grid-template-columns:2fr 1fr;gap:10px;margin-top:10px}.period-free-box label{display:grid;gap:5px;font-size:12px;font-weight:700}.period-free-box input,.period-free-box select{width:100%}@media(max-width:700px){.bill-utility-filter{justify-content:stretch}.bill-utility-filter label{width:100%;justify-content:space-between}.bill-utility-filter select{flex:1}.period-free-box{grid-template-columns:1fr}}
+
+/* Casa+ 2.7.27 — Bollette: scadenze e stati più leggibili */
+body[data-page="bollette"] .bill-card-due{border-left:4px solid #e6a21a!important;background:linear-gradient(90deg,#fffaf0 0,#fff 18%)!important}
+body[data-page="bollette"] .bill-card-overdue{border-left:4px solid #d94b4b!important;background:linear-gradient(90deg,#fff5f5 0,#fff 18%)!important}
+body[data-page="bollette"] .bill-deadline-label{display:inline-block;margin-right:6px;font-size:9px;font-weight:850;letter-spacing:.055em;color:#9a6814}
+body[data-page="bollette"] .bill-deadline-date{font-size:12px;font-weight:850;color:#80530b}
+body[data-page="bollette"] .monthly-bill-meta.overdue .bill-deadline-label,body[data-page="bollette"] .monthly-bill-meta.overdue .bill-deadline-date{color:#c43737}
+body[data-page="bollette"] .bill-deadline-label.neutral,body[data-page="bollette"] .bill-deadline-date.neutral{color:#8e938f}
+body[data-page="bollette"] .bill-card-due .due-pill{font-size:10px!important;font-weight:900!important;padding:5px 9px!important;background:#fff0cc!important;color:#8b5b00!important;border:1px solid #f0cf83}
+body[data-page="bollette"] .bill-card-overdue .overdue-pill{font-size:10px!important;font-weight:900!important;padding:5px 9px!important;background:#ffe4e4!important;color:#b92d2d!important;border:1px solid #f2b5b5}
+body[data-page="bollette"] .bill-year-scope{font-size:11px;font-weight:750;color:#617084;background:#f3f6fa;border-radius:999px;padding:6px 9px}
+
+/* Spese+ • componenti aggiuntivi; base CSS Casa+ invariata */
+.finance-screen{display:grid;gap:14px;max-width:1120px;margin:0 auto;padding-bottom:30px}
+.finance-month-bar{display:flex;align-items:center;justify-content:center;gap:18px;padding:5px 0 7px}
+.finance-month-bar b{min-width:170px;text-align:center;font-size:1.02rem}
+.finance-month-bar button{min-width:42px;font-size:1.5rem}
+.finance-hero{display:flex;flex-direction:column;gap:9px;padding:25px 22px;border-radius:22px;background:linear-gradient(135deg,#e9f1fa,#f6f8fc);border:1px solid #dce5f0}
+.finance-hero>span{font-size:.74rem;font-weight:800;letter-spacing:.08em;color:#536478}
+.finance-hero>strong{font-size:clamp(2rem,5vw,3.1rem);line-height:1.15;letter-spacing:-.035em;color:#182d47}
+.finance-hero>strong.finance-negative{color:#bd3e3e}
+.finance-hero>small{color:#63758a}
+.finance-two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.finance-summary-card{display:flex;flex-direction:column;align-items:flex-start;text-align:left;gap:8px;background:#fff;border:1px solid #e3e7ec;border-radius:17px;padding:17px;color:inherit;cursor:pointer}
+.finance-summary-card span{color:#5b6b7a;font-size:.86rem}
+.finance-summary-card b{font-size:clamp(1.2rem,3.3vw,1.8rem);color:#21364c}
+.finance-summary-card small{color:#657587;line-height:1.45}
+.finance-comparison{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+.finance-comparison>div{background:#f4f6f8;border-radius:13px;padding:12px;display:grid;gap:7px}
+.finance-comparison span{font-size:.76rem;color:#657587}
+.finance-comparison b{font-size:1.16rem}
+.finance-category-row,.finance-entry-row{display:flex;align-items:center;gap:12px;padding:12px 3px;border-bottom:1px solid #edf0f3}
+.finance-category-row>span:nth-child(2){flex:1}
+.finance-category-icon,.finance-entry-icon{display:grid;place-items:center;width:36px;height:36px;border-radius:11px;background:#edf3fa;flex-shrink:0;font-size:1.15rem}
+.finance-entry-row{width:100%;background:transparent;border-top:0;border-left:0;border-right:0;color:inherit;text-align:left;cursor:pointer}
+.finance-entry-main{display:grid;gap:3px;flex:1;min-width:0}
+.finance-entry-main small{color:#6b7787;font-size:.76rem}
+.finance-entry-row strong{white-space:nowrap}
+.finance-stat-row{display:grid;grid-template-columns:minmax(85px,1fr) 2fr minmax(95px,auto);align-items:center;gap:9px;margin:13px 0;font-size:.83rem}
+.finance-stat-row strong{text-align:right;font-size:.83rem}
+.finance-stat-track{height:9px;background:#e8eef5;border-radius:10px;overflow:hidden}
+.finance-stat-track i{display:block;height:100%;background:#4c86c2;border-radius:10px}
+@media(max-width:550px){.finance-hero{padding:20px 17px}.finance-two{gap:9px}.finance-summary-card{padding:13px}.finance-stat-row{grid-template-columns:minmax(68px,1fr) 1.4fr minmax(80px,auto);font-size:.72rem}}
