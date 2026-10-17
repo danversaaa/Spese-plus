@@ -23,6 +23,8 @@ const fb = initializeApp(firebaseConfig);
 // per popup/redirect caricate da getAuth(). La persistenza locale è configurata
 // direttamente all'inizializzazione e non viene più attesa a ogni login.
 const auth = initializeAuth(fb,{persistence:browserLocalPersistence});
+// Le email Firebase per il recupero della password vengono inviate in italiano.
+auth.languageCode = "it";
 // Configura questo UID dopo aver creato l’unico account in Firebase Authentication.
 const OWNER_UID = "yMj6leDGaLRKlT1UdFTZ2mmZYi32";
 
@@ -473,7 +475,7 @@ function financeComparisonBadge(item){
   const abs=money(Math.abs(item.difference));
   if(item.status==='saving')return `<span class="sp-compare-badge sp-compare-saving">↓ Risparmio ${abs} (${Math.abs(item.percentage).toLocaleString('it-IT',{maximumFractionDigits:1})}%)</span>`;
   if(item.status==='increase')return `<span class="sp-compare-badge sp-compare-increase">↑ Spesa maggiore ${abs} (+${item.percentage.toLocaleString('it-IT',{maximumFractionDigits:1})}%)</span>`;
-  if(item.status==='new')return `<span class="sp-compare-badge sp-compare-neutral">Nuova spesa ${abs} · % non calcolabile</span>`;
+  if(item.status==='new')return `<span class="sp-compare-badge sp-compare-increase">↑ Nuova spesa ${abs} · % non calcolabile (mese precedente: 0 €)</span>`;
   return `<span class="sp-compare-badge sp-compare-neutral">Spesa invariata · 0%</span>`;
 }
 function financeComparisonCards(items){
@@ -1009,7 +1011,16 @@ window.saveBill=async id=>{
     alert("Bolletta non salvata. Verifica la connessione e le autorizzazioni Firebase.");
   }
 };
-window.dupBill=async id=>{const b=state.bills.find(x=>x.id===id);if(!b)return;const c={...b};delete c.id;await addDoc(pathFor("bills"),{...c,note:(c.note?c.note+" • ":"")+"Duplicata",createdAt:serverTimestamp(),updatedAt:serverTimestamp()})};
+window.dupBill=async id=>{
+  const b=state.bills.find(x=>x.id===id);if(!b)return;
+  const c={...b};delete c.id;
+  // Una copia di una bolletta pagata non è un secondo pagamento:
+  // resta da pagare finché Peppe registra la nuova data effettiva.
+  if(isPaid(c)){c.stato="Da pagare";c.dataPagamento="";}
+  try{
+    await addDoc(pathFor("bills"),{...c,note:(c.note?c.note+" • ":"")+"Duplicata",createdAt:serverTimestamp(),updatedAt:serverTimestamp()});
+  }catch(err){console.error("Duplicazione bolletta",err);alert("Impossibile duplicare la bolletta. Riprova quando sei online.");}
+};
 window.delBill=async id=>{if(confirm("Eliminare questa bolletta?"))await deleteDoc(docFor("bills",id))};
 
 async function exportBackup(){
@@ -1035,7 +1046,7 @@ if("serviceWorker" in navigator){
   });
   const updateSpesePlus=async()=>{
     try{
-      const reg=await navigator.serviceWorker.register("./sw.js?v=1.2.0",{updateViaCache:"none"});
+      const reg=await navigator.serviceWorker.register("./sw.js?v=1.3.2",{updateViaCache:"none"});
       await reg.update();
     }catch(e){console.warn(e)}
   };
